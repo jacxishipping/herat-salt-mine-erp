@@ -60,6 +60,8 @@
                     <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                  Content="{Binding Strings[NavFinance]}" Command="{Binding SelectTabCommand}" CommandParameter="Finance" />
                     <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                 Content="{Binding Strings[NavAccounting]}" Command="{Binding SelectTabCommand}" CommandParameter="Accounting" />
+                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                  Content="{Binding Strings[NavSuppliers]}" Command="{Binding SelectTabCommand}" CommandParameter="Suppliers" />
                     <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                  Content="{Binding Strings[NavHrHse]}" Command="{Binding SelectTabCommand}" CommandParameter="HrHse" />
@@ -657,6 +659,132 @@
                                         </DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 5B. DOUBLE-ENTRY ACCOUNTING & GENERAL LEDGER -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Accounting}">
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="32"
+                                Visibility="{Binding CannotViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Access Restricted: Only Mine Owner or Finance Officer can view General Ledger, Trial Balance &amp; Financial Statements."
+                                       HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <StackPanel Visibility="{Binding CanViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding Strings[NavAccounting]}" Style="{StaticResource PageTitleStyle}" />
+                            <TextBlock Text="Double-Entry General Ledger (DR = CR) · Auto-Posted from Sales, Kanta, Supplier AP &amp; MoMP Royalties · P&amp;L &amp; Balance Sheet"
+                                       Style="{StaticResource SubtitleStyle}" Margin="0,4,0,14" />
+
+                            <!-- Financial Statements Summary KPIs -->
+                            <UniformGrid Columns="5" Margin="0,0,0,12">
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Assets" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GlTotalAssetsText}" Style="{StaticResource MonoTextStyle}" FontSize="15" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Liabilities + Equity" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GlTotalLiabEquityText}" Style="{StaticResource MonoTextStyle}" FontSize="15" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Revenue (P&amp;L)" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GlRevenueText}" Style="{StaticResource MonoTextStyle}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Expenses (P&amp;L)" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GlExpensesText}" Style="{StaticResource MonoTextStyle}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Net Profit / Loss" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GlNetProfitText}" Style="{StaticResource MonoTextStyle}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+
+                            <!-- Trial Balance Status Banner -->
+                            <Border Style="{StaticResource TerminalBoxStyle}" Padding="12,9" Margin="0,0,0,14">
+                                <TextBlock Text="{Binding TrialBalanceCheckText}" Style="{StaticResource MonoTextStyle}"
+                                           FontSize="12" FontWeight="SemiBold" Foreground="#10B981" />
+                            </Border>
+
+                            <!-- Manual Balanced Journal Entry Form -->
+                            <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="POST MANUAL BALANCED JOURNAL ENTRY (DEBIT = CREDIT)" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                    <UniformGrid Columns="5">
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Debit Account (DR)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <ComboBox ItemsSource="{Binding ChartOfAccounts}" DisplayMemberPath="DisplayLabel"
+                                                      SelectedValuePath="Code" SelectedValue="{Binding JeDebitCode}"
+                                                      Style="{StaticResource SaaSComboBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Credit Account (CR)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <ComboBox ItemsSource="{Binding ChartOfAccounts}" DisplayMemberPath="DisplayLabel"
+                                                      SelectedValuePath="Code" SelectedValue="{Binding JeCreditCode}"
+                                                      Style="{StaticResource SaaSComboBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Amount (AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding JeAmountAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Memo / Description" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding JeMemo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <Button Content="+ Post Journal Entry" Command="{Binding PostManualJournalCommand}"
+                                                Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
+                                    </UniformGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Chart of Accounts & Trial Balance Table -->
+                            <Border Style="{StaticResource SurfaceCardStyle}" Padding="0" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="CHART OF ACCOUNTS &amp; TRIAL BALANCE (AFN)" Style="{StaticResource SectionHeaderStyle}" Margin="14,12,14,8" />
+                                    <DataGrid ItemsSource="{Binding ChartOfAccounts}" Style="{StaticResource SaaSDataGridStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="75" />
+                                            <DataGridTextColumn Header="Account Name" Binding="{Binding Name}" Width="*" />
+                                            <DataGridTextColumn Header="Type" Binding="{Binding AccountType}" Width="105" />
+                                            <DataGridTextColumn Header="Total Debit (AFN)" Binding="{Binding TotalDebitAfn, StringFormat=N0}" Width="135" />
+                                            <DataGridTextColumn Header="Total Credit (AFN)" Binding="{Binding TotalCreditAfn, StringFormat=N0}" Width="135" />
+                                            <DataGridTextColumn Header="Balance (AFN)" Binding="{Binding BalanceAfn, StringFormat=N0}" Width="135" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- General Ledger Journal Feed with Account Filter -->
+                            <Border Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                                <StackPanel>
+                                    <Grid Margin="14,12,14,8">
+                                        <TextBlock Text="GENERAL LEDGER JOURNAL FEED &amp; ACCOUNT STATEMENT" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center" />
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <TextBlock Text="Filter Account:" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <ComboBox ItemsSource="{Binding GlFilterOptions}" SelectedItem="{Binding GlFilterAccount}"
+                                                      Style="{StaticResource SaaSComboBoxStyle}" Width="120" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <DataGrid ItemsSource="{Binding FilteredJournals}" Style="{StaticResource SaaSDataGridStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="JE #" Binding="{Binding EntryNumber}" Width="115" />
+                                            <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="125" />
+                                            <DataGridTextColumn Header="Debit (DR)" Binding="{Binding DebitAccountName}" Width="185" />
+                                            <DataGridTextColumn Header="Credit (CR)" Binding="{Binding CreditAccountName}" Width="185" />
+                                            <DataGridTextColumn Header="Amount (AFN)" Binding="{Binding AmountAfn, StringFormat=N0}" Width="115" />
+                                            <DataGridTextColumn Header="Memo" Binding="{Binding Memo}" Width="*" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
                             </Border>
                         </StackPanel>
                     </StackPanel>

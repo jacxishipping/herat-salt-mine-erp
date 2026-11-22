@@ -81,6 +81,12 @@ public sealed class ErpDataService
                 {
                     if (loaded.SupplierBills.Count == 0) loaded.SupplierBills = BuildSeedSnapshot().SupplierBills;
                     if (loaded.Operators.Count == 0) loaded.Operators = BuildSeedSnapshot().Operators;
+                    if (loaded.ChartOfAccounts.Count == 0)
+                    {
+                        var fresh = BuildSeedSnapshot();
+                        loaded.ChartOfAccounts = fresh.ChartOfAccounts;
+                        loaded.JournalEntries = fresh.JournalEntries;
+                    }
                     return loaded;
                 }
             }
@@ -308,6 +314,29 @@ public sealed class ErpDataService
             new() { Email = "warehouse@heratsalt.af", FullName = "Eng. Jawid Sadat", Role = UserRole.WAREHOUSE_OFFICER, IsActive = true },
             new() { Email = "finance@heratsalt.af", FullName = "Mirwais Sultani", Role = UserRole.FINANCE_OFFICER, IsActive = true },
             new() { Email = "hse@heratsalt.af", FullName = "Dr. Zabiullah Rahimi", Role = UserRole.HSE_COMPLIANCE_OFFICER, IsActive = true }
+        },
+        ChartOfAccounts = new()
+        {
+            new() { Code = "1000", Name = "Herat Cash Desk (AFN)", AccountType = "ASSET", TotalDebitAfn = 2489600, TotalCreditAfn = 145000 },
+            new() { Code = "1010", Name = "Azizi / AIB Corporate Bank", AccountType = "ASSET", TotalDebitAfn = 7650000, TotalCreditAfn = 3122000 },
+            new() { Code = "1020", Name = "Hawala Saraf Clearing", AccountType = "ASSET", TotalDebitAfn = 1321750, TotalCreditAfn = 128000 },
+            new() { Code = "1200", Name = "Accounts Receivable (Buyers)", AccountType = "ASSET", TotalDebitAfn = 1916750, TotalCreditAfn = 321750 },
+            new() { Code = "1300", Name = "Salt Stockpile & Inventory", AccountType = "ASSET", TotalDebitAfn = 3500000, TotalCreditAfn = 0 },
+            new() { Code = "2000", Name = "Accounts Payable (Suppliers)", AccountType = "LIABILITY", TotalDebitAfn = 128000, TotalCreditAfn = 427000 },
+            new() { Code = "2100", Name = "MoMP Royalty Payable", AccountType = "LIABILITY", TotalDebitAfn = 3122000, TotalCreditAfn = 3918215 },
+            new() { Code = "2200", Name = "Workforce Payroll Payable", AccountType = "LIABILITY", TotalDebitAfn = 0, TotalCreditAfn = 96580 },
+            new() { Code = "3000", Name = "Owner Capital & Equity", AccountType = "EQUITY", TotalDebitAfn = 0, TotalCreditAfn = 10000000 },
+            new() { Code = "4000", Name = "Salt Sales Revenue", AccountType = "REVENUE", TotalDebitAfn = 0, TotalCreditAfn = 5456350 },
+            new() { Code = "5000", Name = "Extraction & Diesel COGS", AccountType = "EXPENSE", TotalDebitAfn = 360000, TotalCreditAfn = 0 },
+            new() { Code = "5100", Name = "Processing, Iodine & Bags", AccountType = "EXPENSE", TotalDebitAfn = 212000, TotalCreditAfn = 0 },
+            new() { Code = "5200", Name = "MoMP Royalty & Freight Exp.", AccountType = "EXPENSE", TotalDebitAfn = 2914795, TotalCreditAfn = 0 }
+        },
+        JournalEntries = new()
+        {
+            new() { EntryNumber = "JE-2026-0004", Date = "2026-11-18 08:30", DebitAccountCode = "5000", DebitAccountName = "Extraction & Diesel COGS", CreditAccountCode = "1000", CreditAccountName = "Herat Cash Desk (AFN)", AmountAfn = 145000, Memo = "Diesel fuel settlement — Herat Industrial Fuel Co.", PostedBy = "Finance Officer" },
+            new() { EntryNumber = "JE-2026-0003", Date = "2026-11-18 08:00", DebitAccountCode = "1020", DebitAccountName = "Hawala Saraf Clearing", CreditAccountCode = "1200", CreditAccountName = "Accounts Receivable (Buyers)", AmountAfn = 321750, Memo = "Khorasan Food Industries ($4,500 Hawala #HW-9921)", PostedBy = "Finance Officer" },
+            new() { EntryNumber = "JE-2026-0002", Date = "2026-11-18 07:50", DebitAccountCode = "1200", DebitAccountName = "Accounts Receivable (Buyers)", CreditAccountCode = "4000", CreditAccountName = "Salt Sales Revenue", AmountAfn = 170000, Memo = "Kanta Dispatch KNT-2026-001842 (25 MT Refined Iodized)", PostedBy = "System Auto-Post" },
+            new() { EntryNumber = "JE-2026-0001", Date = "2026-11-01 08:00", DebitAccountCode = "1010", DebitAccountName = "Azizi / AIB Corporate Bank", CreditAccountCode = "3000", CreditAccountName = "Owner Capital & Equity", AmountAfn = 4200000, Memo = "Opening capital & mine operating liquidity", PostedBy = "Mine Owner" }
         },
         AuditLogs = new()
         {

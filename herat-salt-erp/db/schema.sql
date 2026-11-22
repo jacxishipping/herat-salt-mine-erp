@@ -372,3 +372,35 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_audit_weighbridge
   AFTER INSERT OR UPDATE ON weighbridge_tickets
   FOR EACH ROW EXECUTE FUNCTION fn_audit_weighbridge();
+
+-- ----------------------------------------------------------------------------
+-- 9. DOUBLE-ENTRY GENERAL LEDGER (CHART OF ACCOUNTS & BALANCED JOURNALS)
+-- ----------------------------------------------------------------------------
+CREATE TABLE chart_of_accounts (
+  code            VARCHAR(12) PRIMARY KEY,
+  name            VARCHAR(140) NOT NULL,
+  account_type    VARCHAR(20) NOT NULL CHECK (account_type IN ('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE')),
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE journal_entries (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  entry_number    VARCHAR(32) UNIQUE NOT NULL,
+  entry_date      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  memo            TEXT NOT NULL,
+  posted_by       UUID REFERENCES users(id),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE journal_lines (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  journal_id      UUID NOT NULL REFERENCES journal_entries(id),
+  account_code    VARCHAR(12) NOT NULL REFERENCES chart_of_accounts(code),
+  debit_afn       NUMERIC(16, 2) NOT NULL DEFAULT 0 CHECK (debit_afn >= 0),
+  credit_afn      NUMERIC(16, 2) NOT NULL DEFAULT 0 CHECK (credit_afn >= 0),
+  CONSTRAINT chk_debit_xor_credit CHECK ((debit_afn > 0 AND credit_afn = 0) OR (credit_afn > 0 AND debit_afn = 0))
+);
+
+CREATE INDEX idx_journal_lines_account ON journal_lines(account_code);
+

@@ -263,6 +263,32 @@ public sealed class AppSettings
     public string SyncApiBaseUrl { get; set; } = "http://localhost:3000";
 }
 
+public sealed class GlAccount
+{
+    public string Code { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string AccountType { get; set; } = "ASSET"; // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+    public double TotalDebitAfn { get; set; }
+    public double TotalCreditAfn { get; set; }
+    public double BalanceAfn => AccountType is "ASSET" or "EXPENSE"
+        ? TotalDebitAfn - TotalCreditAfn
+        : TotalCreditAfn - TotalDebitAfn;
+    public string DisplayLabel => $"{Code} — {Name}";
+}
+
+public sealed class JournalEntry
+{
+    public string EntryNumber { get; set; } = "";
+    public string Date { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+    public string DebitAccountCode { get; set; } = "";
+    public string DebitAccountName { get; set; } = "";
+    public string CreditAccountCode { get; set; } = "";
+    public string CreditAccountName { get; set; } = "";
+    public double AmountAfn { get; set; }
+    public string Memo { get; set; } = "";
+    public string PostedBy { get; set; } = "";
+}
+
 public sealed class ErpLocalSnapshot
 {
     public double UsdToAfn { get; set; } = 71.50;
@@ -285,5 +311,7 @@ public sealed class ErpLocalSnapshot
     public List<PpeIssuance> PpeIssuances { get; set; } = new();
     public List<HseIncident> HseIncidents { get; set; } = new();
     public List<OperatorAccount> Operators { get; set; } = new();
+    public List<GlAccount> ChartOfAccounts { get; set; } = new();
+    public List<JournalEntry> JournalEntries { get; set; } = new();
     public List<AuditLogEntry> AuditLogs { get; set; } = new();
 }

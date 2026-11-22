@@ -66,6 +66,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<PpeIssuance> PpeIssuances { get; }
     public ObservableCollection<HseIncident> HseIncidents { get; }
     public ObservableCollection<OperatorAccount> Operators { get; }
+    public ObservableCollection<GlAccount> ChartOfAccounts { get; }
+    public ObservableCollection<JournalEntry> JournalEntries { get; }
+    public ObservableCollection<JournalEntry> FilteredJournals { get; } = new();
     public ObservableCollection<AuditLogEntry> AuditLogs { get; }
 
     // Reference Lists
@@ -200,6 +203,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         "Sales" => Strings["NavSales"],
         "Customers" => Strings["NavCustomers"],
         "Finance" => Strings["NavFinance"],
+        "Accounting" => Strings["NavAccounting"],
         "Suppliers" => Strings["NavSuppliers"],
         "HrHse" => Strings["NavHrHse"],
         "Audit" => Strings["NavAudit"],
@@ -388,6 +392,39 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string NewOpName { get; set; } = "";
     public UserRole NewOpRole { get; set; } = UserRole.WEIGHBRIDGE_CLERK;
 
+    // Double-Entry Accounting & General Ledger Fields
+    public string JeDebitCode { get; set; } = "1000";
+    public string JeCreditCode { get; set; } = "4000";
+    public double JeAmountAfn { get; set; } = 50000;
+    public string JeMemo { get; set; } = "Manual accounting adjustment / entry";
+    public IReadOnlyList<string> GlFilterOptions { get; } = new[]
+    {
+        "ALL", "1000", "1010", "1020", "1200", "1300", "2000", "2100", "2200", "3000", "4000", "5000", "5100", "5200"
+    };
+    private string _glFilterAccount = "ALL";
+    public string GlFilterAccount { get => _glFilterAccount; set { _glFilterAccount = value; OnPropertyChanged(); ApplyJournalFilter(); } }
+
+    public string GlTotalAssetsText => FormatMoney(ChartOfAccounts.Where(a => a.AccountType == "ASSET").Sum(a => a.BalanceAfn));
+    public string GlTotalLiabEquityText => FormatMoney(
+        ChartOfAccounts.Where(a => a.AccountType is "LIABILITY" or "EQUITY").Sum(a => a.BalanceAfn) +
+        (ChartOfAccounts.Where(a => a.AccountType == "REVENUE").Sum(a => a.BalanceAfn) -
+         ChartOfAccounts.Where(a => a.AccountType == "EXPENSE").Sum(a => a.BalanceAfn)));
+    public string GlRevenueText => FormatMoney(ChartOfAccounts.Where(a => a.AccountType == "REVENUE").Sum(a => a.BalanceAfn));
+    public string GlExpensesText => FormatMoney(ChartOfAccounts.Where(a => a.AccountType == "EXPENSE").Sum(a => a.BalanceAfn));
+    public string GlNetProfitText => FormatMoney(
+        ChartOfAccounts.Where(a => a.AccountType == "REVENUE").Sum(a => a.BalanceAfn) -
+        ChartOfAccounts.Where(a => a.AccountType == "EXPENSE").Sum(a => a.BalanceAfn));
+    public string TrialBalanceCheckText
+    {
+        get
+        {
+            double dr = ChartOfAccounts.Sum(a => a.TotalDebitAfn);
+            double cr = ChartOfAccounts.Sum(a => a.TotalCreditAfn);
+            var ok = Math.Abs(dr - cr) < 0.01;
+            return $"Trial Balance: DR {dr:N0} AFN = CR {cr:N0} AFN ({(ok ? "BALANCED" : "OUT OF BALANCE")})";
+        }
+    }
+
     // Commands
     public ICommand SelectTabCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -415,6 +452,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand AddSupplierBillCommand { get; }
     public ICommand PaySupplierBillCommand { get; }
     public ICommand PostFinancialEntryCommand { get; }
+    public ICommand PostManualJournalCommand { get; }
     public ICommand SettleInvoiceCommand { get; }
     public ICommand MarkRoyaltyFiledCommand { get; }
     public ICommand MarkRoyaltyPaidCommand { get; }
@@ -455,8 +493,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         PpeIssuances = new(_snapshot.PpeIssuances);
         HseIncidents = new(_snapshot.HseIncidents);
         Operators = new(_snapshot.Operators);
+        ChartOfAccounts = new(_snapshot.ChartOfAccounts);
+        JournalEntries = new(_snapshot.JournalEntries);
         AuditLogs = new(_snapshot.AuditLogs);
         ApplyTicketFilter();
+        ApplyJournalFilter();
 
         SelectTabCommand = new RelayCommand(p => ActiveTab = p?.ToString() ?? "Dashboard");
         ToggleThemeCommand = new RelayCommand(_ => IsDarkTheme = !IsDarkTheme);
@@ -484,6 +525,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         AddSupplierBillCommand = new RelayCommand(_ => AddSupplierBill());
         PaySupplierBillCommand = new RelayCommand(p => PaySupplierBill(p as SupplierBill));
         PostFinancialEntryCommand = new RelayCommand(_ => PostFinancialEntry());
+        PostManualJournalCommand = new RelayCommand(_ => PostManualJournal());
         SettleInvoiceCommand = new RelayCommand(p => SettleInvoice(p as InvoiceRecord));
         MarkRoyaltyFiledCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "FILED"));
         MarkRoyaltyPaidCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "PAID"));
@@ -591,6 +633,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             };
             Invoices.Insert(0, inv);
             _snapshot.Invoices.Insert(0, inv);
+            PostDoubleEntry("1200", "4000", inv.TotalAfn, $"Kanta Dispatch {ticketNo} ({inv.QuantityMt:F2} MT {TicketSaltGrade})");
         }
 
         AddAudit("weighbridge_tickets", ticketNo, "INSERT", $"Issued {netKg / 1000.0:F2} MT ({TicketSaltGrade}) for {ticket.TruckPlate}");
@@ -720,9 +763,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void SettleInvoice(InvoiceRecord? inv)
     {
-        if (inv is null || !CanViewFinancials) return;
+        if (inv is null || !CanViewFinancials || inv.Status == "PAID") return;
+        var remaining = inv.BalanceAfn;
         inv.PaidAfn = inv.TotalAfn;
         inv.Status = "PAID";
+        if (remaining > 0)
+            PostDoubleEntry("1020", "1200", remaining, $"Invoice settlement {inv.InvoiceNumber} ({inv.CustomerName})");
         AddAudit("invoices", inv.InvoiceNumber, "STATUS_UPDATE", $"Settled full balance on {inv.InvoiceNumber}");
         PersistAndRefresh();
         ShowToast($"Invoice {inv.InvoiceNumber} marked PAID");
@@ -731,7 +777,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void UpdateRoyalty(MompRoyalty? royalty, string status)
     {
         if (royalty is null || !CanViewFinancials) return;
+        var wasPaid = royalty.Status == "PAID";
         royalty.Status = status;
+        if (status == "PAID" && !wasPaid && royalty.TotalRoyaltyAfn > 0)
+            PostDoubleEntry("2100", "1010", royalty.TotalRoyaltyAfn, $"MoMP Royalty paid — {royalty.PeriodLabel} ({royalty.CustomsBorderRef})");
         AddAudit("momp_royalties", royalty.CustomsBorderRef, "STATUS_UPDATE", $"Marked {royalty.PeriodLabel} {status}");
         PersistAndRefresh();
         ShowToast($"MoMP Royalty marked {status}");
@@ -860,6 +909,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         };
         SupplierBills.Insert(0, bill);
         _snapshot.SupplierBills.Insert(0, bill);
+        var expCode = bill.Category is "PACKAGING_BAGS" or "POTASSIUM_IODATE" ? "5100" : "5000";
+        PostDoubleEntry(expCode, "2000", bill.AmountAfn, $"Vendor AP Bill {bill.BillNumber} — {bill.SupplierName} ({bill.Category})");
         AddAudit("supplier_bills", bill.BillNumber, "INSERT", $"Recorded AP bill {bill.AmountAfn:N0} AFN ({bill.SupplierName})");
         PersistAndRefresh();
         ShowToast($"Recorded vendor bill {bill.BillNumber}");
@@ -882,6 +933,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         };
         FinancialLedger.Insert(0, fin);
         _snapshot.FinancialLedger.Insert(0, fin);
+        PostDoubleEntry("2000", "1020", bill.AmountAfn, $"Paid AP Bill {bill.BillNumber} via Hawala ({bill.PaymentRef})");
         AddAudit("supplier_bills", bill.BillNumber, "STATUS_UPDATE", $"Paid vendor bill {bill.BillNumber} ({bill.AmountAfn:N0} AFN)");
         PersistAndRefresh();
         ShowToast($"Paid {bill.BillNumber} via Hawala");
@@ -977,9 +1029,63 @@ public sealed class MainViewModel : INotifyPropertyChanged
             _snapshot.FinancialLedger.Insert(0, fin);
         }
 
+        var debitAcc = SalePaymentMethod == "CASH" ? "1000" : "1200";
+        PostDoubleEntry(debitAcc, "4000", totalAfn, $"Salt Sale {invNo} — {SaleQtyMt} MT {SaleSaltGrade} to {SaleCustomer}");
         AddAudit("sales_orders", invNo, "INSERT", $"Sold {SaleQtyMt} MT ({SaleSaltGrade}) to {SaleCustomer} — {FormatMoney(totalAfn)} ({SalePaymentMethod})");
         PersistAndRefresh();
         ShowToast($"Sale {invNo} created ({FormatMoney(totalAfn)})");
+    }
+
+    private void ApplyJournalFilter()
+    {
+        FilteredJournals.Clear();
+        foreach (var j in JournalEntries)
+        {
+            if (GlFilterAccount != "ALL" && j.DebitAccountCode != GlFilterAccount && j.CreditAccountCode != GlFilterAccount)
+                continue;
+            FilteredJournals.Add(j);
+        }
+    }
+
+    private void PostDoubleEntry(string debitCode, string creditCode, double amountAfn, string memo)
+    {
+        if (amountAfn <= 0 || debitCode == creditCode) return;
+        var dr = ChartOfAccounts.FirstOrDefault(a => a.Code == debitCode);
+        var cr = ChartOfAccounts.FirstOrDefault(a => a.Code == creditCode);
+        if (dr is null || cr is null) return;
+
+        dr.TotalDebitAfn = Math.Round(dr.TotalDebitAfn + amountAfn, 2);
+        cr.TotalCreditAfn = Math.Round(cr.TotalCreditAfn + amountAfn, 2);
+
+        var je = new JournalEntry
+        {
+            EntryNumber = $"JE-2026-{JournalEntries.Count + 1:D4}",
+            Date = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            DebitAccountCode = dr.Code,
+            DebitAccountName = dr.Name,
+            CreditAccountCode = cr.Code,
+            CreditAccountName = cr.Name,
+            AmountAfn = Math.Round(amountAfn, 2),
+            Memo = memo,
+            PostedBy = ActiveRole.ToString()
+        };
+
+        JournalEntries.Insert(0, je);
+        _snapshot.JournalEntries.Insert(0, je);
+        ApplyJournalFilter();
+        System.Windows.Data.CollectionViewSource.GetDefaultView(ChartOfAccounts)?.Refresh();
+    }
+
+    private void PostManualJournal()
+    {
+        if (!CanViewFinancials) { ShowToast("Owner or Finance Officer role required."); return; }
+        if (JeAmountAfn <= 0) { ShowToast("Amount must be greater than 0 AFN."); return; }
+        if (JeDebitCode == JeCreditCode) { ShowToast("Debit and Credit accounts must be different."); return; }
+
+        PostDoubleEntry(JeDebitCode, JeCreditCode, JeAmountAfn, string.IsNullOrWhiteSpace(JeMemo) ? "Manual GL Journal" : JeMemo.Trim());
+        AddAudit("journal_entries", JournalEntries[0].EntryNumber, "INSERT", $"DR {JeDebitCode} / CR {JeCreditCode}: {JeAmountAfn:N0} AFN — {JeMemo}");
+        PersistAndRefresh();
+        ShowToast($"Posted balanced journal {JournalEntries[0].EntryNumber} ({JeAmountAfn:N0} AFN)");
     }
 
     private void AddCustomer()
@@ -1030,6 +1136,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(KpiRoyaltyText));
         OnPropertyChanged(nameof(KpiFuelText));
         OnPropertyChanged(nameof(SaleTotalPreview));
+        OnPropertyChanged(nameof(GlTotalAssetsText));
+        OnPropertyChanged(nameof(GlTotalLiabEquityText));
+        OnPropertyChanged(nameof(GlRevenueText));
+        OnPropertyChanged(nameof(GlExpensesText));
+        OnPropertyChanged(nameof(GlNetProfitText));
+        OnPropertyChanged(nameof(TrialBalanceCheckText));
         OnPropertyChanged(nameof(PendingSyncCount));
         OnPropertyChanged(nameof(PendingSyncLabel));
         OnPropertyChanged(nameof(HasPendingSync));
