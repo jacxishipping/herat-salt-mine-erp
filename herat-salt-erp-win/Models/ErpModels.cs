@@ -237,9 +237,36 @@ public sealed class AuditLogEntry
     public string Actor { get; set; } = "";
 }
 
+public sealed class SupplierBill
+{
+    public string BillNumber { get; set; } = "";
+    public string SupplierName { get; set; } = "";
+    public string Category { get; set; } = "DIESEL_FUEL"; // DIESEL_FUEL, EXPLOSIVES, PACKAGING_BAGS, POTASSIUM_IODATE
+    public double AmountAfn { get; set; }
+    public string DueDate { get; set; } = DateTime.Now.AddDays(14).ToString("yyyy-MM-dd");
+    public string Status { get; set; } = "UNPAID"; // UNPAID, PAID
+    public string PaymentRef { get; set; } = "";
+}
+
+public sealed class OperatorAccount
+{
+    public string Email { get; set; } = "";
+    public string FullName { get; set; } = "";
+    public UserRole Role { get; set; } = UserRole.WEIGHBRIDGE_CLERK;
+    public bool IsActive { get; set; } = true;
+}
+
+public sealed class AppSettings
+{
+    public string ComPort { get; set; } = "COM3";
+    public int BaudRate { get; set; } = 9600;
+    public string SyncApiBaseUrl { get; set; } = "http://localhost:3000";
+}
+
 public sealed class ErpLocalSnapshot
 {
     public double UsdToAfn { get; set; } = 71.50;
+    public AppSettings Settings { get; set; } = new();
     public List<MineZone> Zones { get; set; } = new();
     public List<FleetAsset> FleetAssets { get; set; } = new();
     public List<ExtractionLog> ExtractionLogs { get; set; } = new();
@@ -250,11 +277,13 @@ public sealed class ErpLocalSnapshot
     public List<CustomerAccount> Customers { get; set; } = new();
     public List<TonnageContract> Contracts { get; set; } = new();
     public List<InvoiceRecord> Invoices { get; set; } = new();
+    public List<SupplierBill> SupplierBills { get; set; } = new();
     public List<FinancialEntry> FinancialLedger { get; set; } = new();
     public List<MompRoyalty> MompRoyalties { get; set; } = new();
     public List<EmployeePayroll> PayrollRecords { get; set; } = new();
     public List<AttendanceRecord> AttendanceRecords { get; set; } = new();
     public List<PpeIssuance> PpeIssuances { get; set; } = new();
     public List<HseIncident> HseIncidents { get; set; } = new();
+    public List<OperatorAccount> Operators { get; set; } = new();
     public List<AuditLogEntry> AuditLogs { get; set; } = new();
 }

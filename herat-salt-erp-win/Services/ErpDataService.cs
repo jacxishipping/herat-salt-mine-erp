@@ -9,15 +9,20 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using HeratSaltErp.Models;
+using Microsoft.Data.Sqlite;
 
 namespace HeratSaltErp.Services;
 
+/// <summary>
+/// ACID-compliant local SQLite persistence (%LocalAppData%\HeratSaltErp\herat_salt_erp.db),
+/// Windows DPAPI JWT vault, SHA-256 QR seal generator, and cloud batch sync client.
+/// </summary>
 public sealed class ErpDataService
 {
-    private readonly string _storagePath;
+    private readonly string _dbPath;
     private readonly string _tokenVaultPath;
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(8) };
-    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
 
     public ErpDataService()
     {
@@ -26,23 +31,61 @@ public sealed class ErpDataService
             "HeratSaltErp"
         );
         Directory.CreateDirectory(appDir);
-        _storagePath = Path.Combine(appDir, "erp_offline_store.json");
+        _dbPath = Path.Combine(appDir, "herat_salt_erp.db");
         _tokenVaultPath = Path.Combine(appDir, "dpapi_jwt.bin");
+        EnsureSqliteSchema();
+    }
+
+    private SqliteConnection OpenConnection()
+    {
+        var conn = new SqliteConnection($"Data Source={_dbPath}");
+        conn.Open();
+        return conn;
+    }
+
+    private void EnsureSqliteSchema()
+    {
+        using var conn = OpenConnection();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            PRAGMA journal_mode = WAL;
+            CREATE TABLE IF NOT EXISTS erp_snapshots (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                payload_json TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS immutable_audit_trail (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                table_name TEXT NOT NULL,
+                record_ref TEXT NOT NULL,
+                action TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                actor TEXT NOT NULL
+            );";
+        cmd.ExecuteNonQuery();
     }
 
     public ErpLocalSnapshot LoadOrSeed()
     {
-        if (File.Exists(_storagePath))
+        try
         {
-            try
+            using var conn = OpenConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT payload_json FROM erp_snapshots WHERE id = 1";
+            var raw = cmd.ExecuteScalar() as string;
+            if (!string.IsNullOrWhiteSpace(raw))
             {
-                var json = File.ReadAllText(_storagePath, Encoding.UTF8);
-                var loaded = JsonSerializer.Deserialize<ErpLocalSnapshot>(json);
+                var loaded = JsonSerializer.Deserialize<ErpLocalSnapshot>(raw);
                 if (loaded is not null && loaded.Zones.Count > 0)
+                {
+                    if (loaded.SupplierBills.Count == 0) loaded.SupplierBills = BuildSeedSnapshot().SupplierBills;
+                    if (loaded.Operators.Count == 0) loaded.Operators = BuildSeedSnapshot().Operators;
                     return loaded;
+                }
             }
-            catch { /* fall through to seed */ }
         }
+        catch { /* fall through to seed */ }
 
         var seed = BuildSeedSnapshot();
         Save(seed);
@@ -51,9 +94,38 @@ public sealed class ErpDataService
 
     public void Save(ErpLocalSnapshot snapshot)
     {
-        var tmp = _storagePath + ".tmp";
-        File.WriteAllText(tmp, JsonSerializer.Serialize(snapshot, JsonOpts), Encoding.UTF8);
-        File.Move(tmp, _storagePath, overwrite: true);
+        using var conn = OpenConnection();
+        using var tx = conn.BeginTransaction();
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            INSERT INTO erp_snapshots (id, payload_json, updated_at)
+            VALUES (1, $json, $now)
+            ON CONFLICT(id) DO UPDATE SET payload_json = excluded.payload_json, updated_at = excluded.updated_at;";
+        cmd.Parameters.AddWithValue("$json", JsonSerializer.Serialize(snapshot, JsonOpts));
+        cmd.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
+        cmd.ExecuteNonQuery();
+        tx.Commit();
+    }
+
+    public void AppendAuditRowSqlite(AuditLogEntry entry)
+    {
+        try
+        {
+            using var conn = OpenConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                INSERT INTO immutable_audit_trail (created_at, table_name, record_ref, action, summary, actor)
+                VALUES ($ts, $tbl, $ref, $act, $sum, $actor);";
+            cmd.Parameters.AddWithValue("$ts", DateTime.UtcNow.ToString("O"));
+            cmd.Parameters.AddWithValue("$tbl", entry.TableName);
+            cmd.Parameters.AddWithValue("$ref", entry.RecordRef);
+            cmd.Parameters.AddWithValue("$act", entry.Action);
+            cmd.Parameters.AddWithValue("$sum", entry.Summary);
+            cmd.Parameters.AddWithValue("$actor", entry.Actor);
+            cmd.ExecuteNonQuery();
+        }
+        catch { /* non-fatal */ }
     }
 
     public static string GenerateSha256QrSeal(string ticketNo, string plate, double netKg, DateTime weighOutAt)
@@ -63,9 +135,6 @@ public sealed class ErpDataService
         return Convert.ToHexString(hash)[..24];
     }
 
-    /// <summary>
-    /// Seals a JWT token using Windows user-scoped DPAPI (CryptProtectData).
-    /// </summary>
     public void SealJwtTokenDpapi(string jwt)
     {
         var bytes = Encoding.UTF8.GetBytes(jwt);
@@ -73,31 +142,13 @@ public sealed class ErpDataService
         File.WriteAllBytes(_tokenVaultPath, protectedBytes);
     }
 
-    public string? UnsealJwtTokenDpapi()
-    {
-        if (!File.Exists(_tokenVaultPath)) return null;
-        try
-        {
-            var protectedBytes = File.ReadAllBytes(_tokenVaultPath);
-            var raw = ProtectedData.Unprotect(protectedBytes, null, DataProtectionScope.CurrentUser);
-            return Encoding.UTF8.GetString(raw);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Reconciles pending offline records against the central Herat Salt ERP REST API
-    /// when connectivity is available, falling back to local reconciliation in standalone mode.
-    /// </summary>
     public async Task<int> SyncPendingRecordsAsync(ErpLocalSnapshot snapshot, string apiBaseUrl)
     {
         var pendingTickets = snapshot.WeighbridgeTickets.Where(t => t.SyncState == "PENDING_SYNC").ToList();
         var pendingExt = snapshot.ExtractionLogs.Where(e => e.SyncState == "PENDING_SYNC").ToList();
+        var pendingAtt = snapshot.AttendanceRecords.Where(a => a.SyncState == "PENDING_SYNC").ToList();
         var pendingHse = snapshot.HseIncidents.Where(h => h.SyncState == "PENDING_SYNC").ToList();
-        int total = pendingTickets.Count + pendingExt.Count + pendingHse.Count;
+        int total = pendingTickets.Count + pendingExt.Count + pendingAtt.Count + pendingHse.Count;
         if (total == 0) return 0;
 
         try
@@ -106,27 +157,28 @@ public sealed class ErpDataService
             {
                 tickets = pendingTickets,
                 extractions = pendingExt,
+                attendance = pendingAtt,
                 hse = pendingHse
             });
         }
-        catch
-        {
-            // Standalone desktop mode: still reconcile local state cleanly
-        }
+        catch { /* standalone desktop mode */ }
 
         foreach (var t in pendingTickets) t.SyncState = "SYNCED";
         foreach (var e in pendingExt) e.SyncState = "SYNCED";
+        foreach (var a in pendingAtt) a.SyncState = "SYNCED";
         foreach (var h in pendingHse) h.SyncState = "SYNCED";
 
-        snapshot.AuditLogs.Insert(0, new AuditLogEntry
+        var audit = new AuditLogEntry
         {
             Timestamp = DateTime.Now.ToString("HH:mm:ss"),
             TableName = "sync_batch",
-            RecordRef = "OFFLINE-QUEUE",
+            RecordRef = "SQLITE-QUEUE",
             Action = "SYNC_RECONCILE",
-            Summary = $"Reconciled {total} offline record(s) with central ERP.",
+            Summary = $"Reconciled {total} offline record(s) from local SQLite.",
             Actor = "Windows Sync Engine"
-        });
+        };
+        snapshot.AuditLogs.Insert(0, audit);
+        AppendAuditRowSqlite(audit);
         Save(snapshot);
         return total;
     }
@@ -141,6 +193,8 @@ public sealed class ErpDataService
             sb.AppendLine($"WEIGHBRIDGE,\"{t.TicketNumber}\",\"{t.CounterpartyName}\",{t.NetWeightKg / 1000.0:F2},MT,{t.Status}");
         foreach (var f in snapshot.FinancialLedger)
             sb.AppendLine($"{f.EntryType},\"{f.Reference}\",\"{f.Counterparty}\",{f.AmountAfnEquiv:F2},AFN,{f.Method}");
+        foreach (var b in snapshot.SupplierBills)
+            sb.AppendLine($"SUPPLIER_AP,\"{b.BillNumber}\",\"{b.SupplierName}\",{b.AmountAfn:F2},AFN,{b.Status}");
         foreach (var r in snapshot.MompRoyalties)
             sb.AppendLine($"MOMP_ROYALTY,\"{r.CustomsBorderRef}\",\"{r.PeriodLabel}\",{r.TotalRoyaltyAfn:F2},AFN,{r.Status}");
         File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
@@ -150,6 +204,7 @@ public sealed class ErpDataService
     private static ErpLocalSnapshot BuildSeedSnapshot() => new()
     {
         UsdToAfn = 71.50,
+        Settings = new() { ComPort = "COM3", BaudRate = 9600, SyncApiBaseUrl = "http://localhost:3000" },
         Zones = new()
         {
             new() { Code = "GHR-PIT-01", Region = "Ghoryan", NameEn = "Ghoryan North Rock Pit", NameFa = "گودال سنگ نمک شمال غوریان", NamePs = "د غوریان شمالي ډبرین کنده", ZoneType = "PIT", EstimatedReservesMt = 420000, DailyTargetMt = 180, TodayExtractedMt = 148.5 },
@@ -181,10 +236,37 @@ public sealed class ErpDataService
             new() { WarehouseCode = "WH-HRT-CITY", WarehouseName = "Herat Industrial Park Depot", SaltGrade = "REFINED_IODIZED_25KG", QuantityMt = 440.0, CapacityMt = 6500 },
             new() { WarehouseCode = "WH-ISQ-STG", WarehouseName = "Islam Qala Border Staging", SaltGrade = "LIVESTOCK_SALT_BLOCK", QuantityMt = 290.0, CapacityMt = 2500 }
         },
+        InventoryTransfers = new()
+        {
+            new() { TransferCode = "TRF-2026-0192", TransferType = "TRANSFER", FromWarehouse = "WH-GHR-SITE", ToWarehouse = "WH-HRT-CITY", SaltGrade = "REFINED_IODIZED_25KG", QuantityMt = 65.0, Reason = "Replenish Herat city depot" },
+            new() { TransferCode = "ADJ-2026-0044", TransferType = "SHRINKAGE_ADJUSTMENT", FromWarehouse = "WH-GHR-SITE", ToWarehouse = "-", SaltGrade = "INDUSTRIAL_RAW_ROCK", QuantityMt = 8.5, Reason = "Seasonal moisture loss audit" }
+        },
         ProcessingBatches = new()
         {
             new() { BatchCode = "PRC-2026-0412", SaltGrade = "REFINED_IODIZED_25KG", WarehouseCode = "WH-HRT-CITY", IntakeMt = 120.0, OutputMt = 105.6, IodinePpm = 42.5 },
             new() { BatchCode = "PRC-2026-0413", SaltGrade = "LIVESTOCK_SALT_BLOCK", WarehouseCode = "WH-ISQ-STG", IntakeMt = 85.0, OutputMt = 78.2, IodinePpm = 0 }
+        },
+        Customers = new()
+        {
+            new() { Code = "CUS-EXP-001", CompanyName = "Khorasan Food Industries (Mashhad)", CustomerType = "EXPORT_BUYER", CreditLimitAfn = 2500000, OutstandingAfn = 480000 },
+            new() { Code = "CUS-HRT-014", CompanyName = "Herat Central Salt Wholesalers", CustomerType = "WHOLESALER", CreditLimitAfn = 1200000, OutstandingAfn = 195000 },
+            new() { Code = "CUS-GOV-003", CompanyName = "Western Provinces Municipal Tender", CustomerType = "GOV_TENDER", CreditLimitAfn = 4000000, OutstandingAfn = 920000 }
+        },
+        Contracts = new()
+        {
+            new() { ContractCode = "CTR-EXP-2026-01", CustomerName = "Khorasan Food Industries (Mashhad)", SaltGrade = "REFINED_IODIZED_25KG", ContractedMt = 1500, DeliveredMt = 640, TierPriceAfnPerMt = 6800 },
+            new() { ContractCode = "CTR-GOV-2026-04", CustomerName = "Western Provinces Municipal Tender", SaltGrade = "DEICING_CHEMICAL", ContractedMt = 2000, DeliveredMt = 820, TierPriceAfnPerMt = 3600 }
+        },
+        Invoices = new()
+        {
+            new() { InvoiceNumber = "INV-2026-0881", TicketNumber = "KNT-2026-001842", CustomerName = "Khorasan Food Industries (Mashhad)", QuantityMt = 25.0, TotalAfn = 170000, PaidAfn = 120000, Status = "PARTIAL" },
+            new() { InvoiceNumber = "INV-2026-0882", TicketNumber = "KNT-2026-001843", CustomerName = "Herat Central Salt Wholesalers", QuantityMt = 28.0, TotalAfn = 89600, PaidAfn = 89600, Status = "PAID" }
+        },
+        SupplierBills = new()
+        {
+            new() { BillNumber = "AP-2026-301", SupplierName = "Herat Industrial Fuel & Diesel Co.", Category = "DIESEL_FUEL", AmountAfn = 215000, DueDate = "2026-11-28", Status = "UNPAID" },
+            new() { BillNumber = "AP-2026-302", SupplierName = "Ariana Woven Polypropylene Bags", Category = "PACKAGING_BAGS", AmountAfn = 84000, DueDate = "2026-12-02", Status = "UNPAID" },
+            new() { BillNumber = "AP-2026-303", SupplierName = "Khorasan Potassium Iodate Chem", Category = "POTASSIUM_IODATE", AmountAfn = 128000, DueDate = "2026-11-15", Status = "PAID", PaymentRef = "HW-8841" }
         },
         FinancialLedger = new()
         {
@@ -203,37 +285,6 @@ public sealed class ErpDataService
             new() { EmployeeCode = "EMP-KHS-008", FullName = "Haji Gulabuddin", TazkiraNo = "1388-0218-19044", RoleTitle = "Solar Brine Pan Lead", DaysWorked = 25, DailyWageAfn = 700, TonBonusAfn = 3100, AdvancesDeductionAfn = 1500 },
             new() { EmployeeCode = "EMP-KNT-002", FullName = "Fardin Ahmadi", TazkiraNo = "1399-1104-60122", RoleTitle = "Weighbridge (Kanta) Clerk", DaysWorked = 26, DailyWageAfn = 680, TonBonusAfn = 0, AdvancesDeductionAfn = 1000 }
         },
-        HseIncidents = new()
-        {
-            new() { ZoneCode = "GHR-TUN-02", IncidentType = "DUST_EXCEEDANCE", Severity = "LOW", Description = "Routine PM10 check after blasting; misting fans activated.", PpeCompliant = true },
-            new() { ZoneCode = "GHR-PIT-01", IncidentType = "NEAR_MISS", Severity = "MEDIUM", Description = "Dump truck reversing alarm replaced during Shift A inspection.", PpeCompliant = true }
-        },
-        AuditLogs = new()
-        {
-            new() { Timestamp = "08:54:00", TableName = "weighbridge_tickets", RecordRef = "KNT-2026-001844", Action = "VOID_REQUEST", Summary = "Clerk requested void: Truck axle hydraulic fault.", Actor = "Fardin Ahmadi" },
-            new() { Timestamp = "07:45:12", TableName = "weighbridge_tickets", RecordRef = "KNT-2026-001842", Action = "INSERT", Summary = "Issued 25.00 MT Refined Iodized (Islam Qala Export)", Actor = "Fardin Ahmadi" }
-        },
-        InventoryTransfers = new()
-        {
-            new() { TransferCode = "TRF-2026-0192", TransferType = "TRANSFER", FromWarehouse = "WH-GHR-SITE", ToWarehouse = "WH-HRT-CITY", SaltGrade = "REFINED_IODIZED_25KG", QuantityMt = 65.0, Reason = "Replenish Herat city depot" },
-            new() { TransferCode = "ADJ-2026-0044", TransferType = "SHRINKAGE_ADJUSTMENT", FromWarehouse = "WH-GHR-SITE", ToWarehouse = "-", SaltGrade = "INDUSTRIAL_RAW_ROCK", QuantityMt = 8.5, Reason = "Seasonal moisture loss audit" }
-        },
-        Customers = new()
-        {
-            new() { Code = "CUS-EXP-001", CompanyName = "Khorasan Food Industries (Mashhad)", CustomerType = "EXPORT_BUYER", CreditLimitAfn = 2500000, OutstandingAfn = 480000 },
-            new() { Code = "CUS-HRT-014", CompanyName = "Herat Central Salt Wholesalers", CustomerType = "WHOLESALER", CreditLimitAfn = 1200000, OutstandingAfn = 195000 },
-            new() { Code = "CUS-GOV-003", CompanyName = "Western Provinces Municipal Tender", CustomerType = "GOV_TENDER", CreditLimitAfn = 4000000, OutstandingAfn = 920000 }
-        },
-        Contracts = new()
-        {
-            new() { ContractCode = "CTR-EXP-2026-01", CustomerName = "Khorasan Food Industries (Mashhad)", SaltGrade = "REFINED_IODIZED_25KG", ContractedMt = 1500, DeliveredMt = 640, TierPriceAfnPerMt = 6800 },
-            new() { ContractCode = "CTR-GOV-2026-04", CustomerName = "Western Provinces Municipal Tender", SaltGrade = "DEICING_CHEMICAL", ContractedMt = 2000, DeliveredMt = 820, TierPriceAfnPerMt = 3600 }
-        },
-        Invoices = new()
-        {
-            new() { InvoiceNumber = "INV-2026-0881", TicketNumber = "KNT-2026-001842", CustomerName = "Khorasan Food Industries (Mashhad)", QuantityMt = 25.0, TotalAfn = 170000, PaidAfn = 120000, Status = "PARTIAL" },
-            new() { InvoiceNumber = "INV-2026-0882", TicketNumber = "KNT-2026-001843", CustomerName = "Herat Central Salt Wholesalers", QuantityMt = 28.0, TotalAfn = 89600, PaidAfn = 89600, Status = "PAID" }
-        },
         AttendanceRecords = new()
         {
             new() { EmployeeCode = "EMP-GHR-011", FullName = "Eng. Ahmadullah Noori", ShiftCode = "SHIFT_A_DAY", Method = "BIOMETRIC_FINGERPRINT", CheckInTime = "05:55:00", Status = "PRESENT" },
@@ -243,6 +294,25 @@ public sealed class ErpDataService
         {
             new() { EmployeeCode = "EMP-GHR-011", FullName = "Eng. Ahmadullah Noori", Items = "N95 Dust Respirator (x5), Hard Hat, Safety Boots", IssuedDate = "2026-11-15", Inspector = "Dr. Zabiullah Rahimi" },
             new() { EmployeeCode = "EMP-KHS-008", FullName = "Haji Gulabuddin", Items = "UV Polarized Goggles, Salt-Resistant Rubber Boots", IssuedDate = "2026-11-16", Inspector = "Dr. Zabiullah Rahimi" }
+        },
+        HseIncidents = new()
+        {
+            new() { ZoneCode = "GHR-TUN-02", IncidentType = "DUST_EXCEEDANCE", Severity = "LOW", Description = "Routine PM10 check after blasting; misting fans activated.", PpeCompliant = true },
+            new() { ZoneCode = "GHR-PIT-01", IncidentType = "NEAR_MISS", Severity = "MEDIUM", Description = "Dump truck reversing alarm replaced during Shift A inspection.", PpeCompliant = true }
+        },
+        Operators = new()
+        {
+            new() { Email = "owner@heratsalt.af", FullName = "Haji Abdul Rahim (MD)", Role = UserRole.MINE_OWNER, IsActive = true },
+            new() { Email = "ops@heratsalt.af", FullName = "Eng. Ahmadullah Noori", Role = UserRole.SITE_OPS_MANAGER, IsActive = true },
+            new() { Email = "kanta@heratsalt.af", FullName = "Fardin Ahmadi", Role = UserRole.WEIGHBRIDGE_CLERK, IsActive = true },
+            new() { Email = "warehouse@heratsalt.af", FullName = "Eng. Jawid Sadat", Role = UserRole.WAREHOUSE_OFFICER, IsActive = true },
+            new() { Email = "finance@heratsalt.af", FullName = "Mirwais Sultani", Role = UserRole.FINANCE_OFFICER, IsActive = true },
+            new() { Email = "hse@heratsalt.af", FullName = "Dr. Zabiullah Rahimi", Role = UserRole.HSE_COMPLIANCE_OFFICER, IsActive = true }
+        },
+        AuditLogs = new()
+        {
+            new() { Timestamp = "08:54:00", TableName = "weighbridge_tickets", RecordRef = "KNT-2026-001844", Action = "VOID_REQUEST", Summary = "Clerk requested void: Truck axle hydraulic fault.", Actor = "Fardin Ahmadi" },
+            new() { Timestamp = "07:45:12", TableName = "weighbridge_tickets", RecordRef = "KNT-2026-001842", Action = "INSERT", Summary = "Issued 25.00 MT Refined Iodized (Islam Qala Export)", Actor = "Fardin Ahmadi" }
         }
     };
 }

@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using HeratSaltErp.Models;
 using HeratSaltErp.Services;
 
@@ -57,12 +58,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<CustomerAccount> Customers { get; }
     public ObservableCollection<TonnageContract> Contracts { get; }
     public ObservableCollection<InvoiceRecord> Invoices { get; }
+    public ObservableCollection<SupplierBill> SupplierBills { get; }
     public ObservableCollection<FinancialEntry> FinancialLedger { get; }
     public ObservableCollection<MompRoyalty> MompRoyalties { get; }
     public ObservableCollection<EmployeePayroll> PayrollRecords { get; }
     public ObservableCollection<AttendanceRecord> AttendanceRecords { get; }
     public ObservableCollection<PpeIssuance> PpeIssuances { get; }
     public ObservableCollection<HseIncident> HseIncidents { get; }
+    public ObservableCollection<OperatorAccount> Operators { get; }
     public ObservableCollection<AuditLogEntry> AuditLogs { get; }
 
     // Reference Lists
@@ -82,6 +85,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public IReadOnlyList<string> Shifts { get; } = new[] { "SHIFT_A_DAY", "SHIFT_B_NIGHT" };
     public IReadOnlyList<string> HseCategories { get; } = new[] { "DUST_EXCEEDANCE", "NEAR_MISS", "EQUIPMENT_HAZARD", "INJURY" };
     public IReadOnlyList<string> HseSeverities { get; } = new[] { "LOW", "MEDIUM", "HIGH", "CRITICAL" };
+    public IReadOnlyList<string> SupplierCategories { get; } = new[] { "DIESEL_FUEL", "EXPLOSIVES", "PACKAGING_BAGS", "POTASSIUM_IODATE", "SPARE_PARTS" };
+    public IReadOnlyList<string> AvailableComPorts { get; }
+    public IReadOnlyList<int> BaudRates { get; } = new[] { 9600, 19200, 38400, 57600, 115200 };
 
     // Navigation & Theme
     private string _activeTab = "Dashboard";
@@ -194,8 +200,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
         "Sales" => Strings["NavSales"],
         "Customers" => Strings["NavCustomers"],
         "Finance" => Strings["NavFinance"],
+        "Suppliers" => Strings["NavSuppliers"],
         "HrHse" => Strings["NavHrHse"],
         "Audit" => Strings["NavAudit"],
+        "Settings" => Strings["NavSettings"],
         _ => Strings["NavDashboard"]
     };
 
@@ -298,13 +306,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _hseDesc = "Routine PM10 dust inspection completed";
     public string HseDesc { get => _hseDesc; set { _hseDesc = value; OnPropertyChanged(); } }
 
-    // QR Waybill Slide-Over Drawer
+    // QR Waybill Slide-Over Drawer (with Scannable 2D QR Bitmap)
     private WeighbridgeTicket? _selectedWaybill;
+    private BitmapImage? _selectedWaybillQrImage;
     public WeighbridgeTicket? SelectedWaybill
     {
         get => _selectedWaybill;
-        set { _selectedWaybill = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsWaybillDrawerOpen)); }
+        set
+        {
+            _selectedWaybill = value;
+            _selectedWaybillQrImage = value is null
+                ? null
+                : QrCodeService.GenerateQrBitmap($"HERAT-SALT|{value.TicketNumber}|{value.TruckPlate}|{value.NetWeightKg}kg|{value.QrPayloadHash}");
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedWaybillQrImage));
+            OnPropertyChanged(nameof(IsWaybillDrawerOpen));
+        }
     }
+    public BitmapImage? SelectedWaybillQrImage => _selectedWaybillQrImage;
     public bool IsWaybillDrawerOpen => SelectedWaybill is not null;
 
     // Toast
@@ -353,6 +372,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public double NewCtrMt { get; set; } = 1000;
     public double NewCtrPriceAfn { get; set; } = 6400;
 
+    // Supplier AP Bill Form Fields
+    public string NewBillSupplier { get; set; } = "Herat Industrial Fuel & Diesel Co.";
+    public string NewBillCategory { get; set; } = "DIESEL_FUEL";
+    public double NewBillAmountAfn { get; set; } = 125000;
+    public string NewBillDueDate { get; set; } = DateTime.Now.AddDays(10).ToString("yyyy-MM-dd");
+
+    // Settings & Hardware COM Port Fields
+    public string SettingsComPort { get; set; } = "COM3";
+    public int SettingsBaudRate { get; set; } = 9600;
+    public string SettingsSyncUrl { get; set; } = "http://localhost:3000";
+
+    // Operator Admin Form Fields
+    public string NewOpEmail { get; set; } = "";
+    public string NewOpName { get; set; } = "";
+    public UserRole NewOpRole { get; set; } = UserRole.WEIGHBRIDGE_CLERK;
+
     // Commands
     public ICommand SelectTabCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -377,20 +412,31 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand CreateSaleOrderCommand { get; }
     public ICommand AddCustomerCommand { get; }
     public ICommand AddContractCommand { get; }
+    public ICommand AddSupplierBillCommand { get; }
+    public ICommand PaySupplierBillCommand { get; }
     public ICommand PostFinancialEntryCommand { get; }
     public ICommand SettleInvoiceCommand { get; }
     public ICommand MarkRoyaltyFiledCommand { get; }
     public ICommand MarkRoyaltyPaidCommand { get; }
     public ICommand LogAttendanceCommand { get; }
+    public ICommand PrintPayslipCommand { get; }
     public ICommand LogHseIncidentCommand { get; }
     public ICommand IssuePpeKitCommand { get; }
+    public ICommand SaveSettingsCommand { get; }
+    public ICommand AddOperatorCommand { get; }
+    public ICommand ToggleOperatorCommand { get; }
     public ICommand SyncQueueCommand { get; }
     public ICommand ExportCsvCommand { get; }
 
     public MainViewModel()
     {
+        AvailableComPorts = _kantaService.GetAvailablePorts();
         _snapshot = _dataService.LoadOrSeed();
         _usdToAfn = _snapshot.UsdToAfn;
+        SettingsComPort = _snapshot.Settings.ComPort;
+        SettingsBaudRate = _snapshot.Settings.BaudRate;
+        SettingsSyncUrl = _snapshot.Settings.SyncApiBaseUrl;
+
         Zones = new(_snapshot.Zones);
         FleetAssets = new(_snapshot.FleetAssets);
         ExtractionLogs = new(_snapshot.ExtractionLogs);
@@ -401,12 +447,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         Customers = new(_snapshot.Customers);
         Contracts = new(_snapshot.Contracts);
         Invoices = new(_snapshot.Invoices);
+        SupplierBills = new(_snapshot.SupplierBills);
         FinancialLedger = new(_snapshot.FinancialLedger);
         MompRoyalties = new(_snapshot.MompRoyalties);
         PayrollRecords = new(_snapshot.PayrollRecords);
         AttendanceRecords = new(_snapshot.AttendanceRecords);
         PpeIssuances = new(_snapshot.PpeIssuances);
         HseIncidents = new(_snapshot.HseIncidents);
+        Operators = new(_snapshot.Operators);
         AuditLogs = new(_snapshot.AuditLogs);
         ApplyTicketFilter();
 
@@ -433,13 +481,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
         CreateSaleOrderCommand = new RelayCommand(_ => CreateSaleOrder());
         AddCustomerCommand = new RelayCommand(_ => AddCustomer());
         AddContractCommand = new RelayCommand(_ => AddContract());
+        AddSupplierBillCommand = new RelayCommand(_ => AddSupplierBill());
+        PaySupplierBillCommand = new RelayCommand(p => PaySupplierBill(p as SupplierBill));
         PostFinancialEntryCommand = new RelayCommand(_ => PostFinancialEntry());
         SettleInvoiceCommand = new RelayCommand(p => SettleInvoice(p as InvoiceRecord));
         MarkRoyaltyFiledCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "FILED"));
         MarkRoyaltyPaidCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "PAID"));
         LogAttendanceCommand = new RelayCommand(_ => LogBiometricAttendance());
+        PrintPayslipCommand = new RelayCommand(p => PrintWorkerPayslip(p as EmployeePayroll));
         LogHseIncidentCommand = new RelayCommand(_ => LogHseIncident());
         IssuePpeKitCommand = new RelayCommand(_ => IssuePpeKit());
+        SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
+        AddOperatorCommand = new RelayCommand(_ => AddOperator());
+        ToggleOperatorCommand = new RelayCommand(p => ToggleOperator(p as OperatorAccount));
         SyncQueueCommand = new RelayCommand(async _ => await SyncOfflineQueueAsync());
         ExportCsvCommand = new RelayCommand(_ => ExportCsv());
         RecalculateSaleQuote();
@@ -484,7 +538,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void CaptureRs232Scale()
     {
-        var (weightKg, mode, scaleId) = _kantaService.CaptureWeight("COM3");
+        var (weightKg, mode, scaleId) = _kantaService.CaptureWeight(SettingsComPort, SettingsBaudRate);
         TicketGrossKg = weightKg;
         ShowToast($"Locked {weightKg:N0} kg from {scaleId} ({mode})");
     }
@@ -734,8 +788,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task SyncOfflineQueueAsync()
     {
-        int count = await _dataService.SyncPendingRecordsAsync(_snapshot, "http://localhost:3000");
-        foreach (var a in AttendanceRecords.Where(x => x.SyncState == "PENDING_SYNC")) { a.SyncState = "SYNCED"; count++; }
+        int count = await _dataService.SyncPendingRecordsAsync(_snapshot, SettingsSyncUrl);
         if (count > 0)
         {
             ApplyTicketFilter();
@@ -762,8 +815,110 @@ public sealed class MainViewModel : INotifyPropertyChanged
         };
         doc.Blocks.Add(new Paragraph(new Bold(new Run("HERAT SALT MINE — KANTA WAYBILL"))) { TextAlignment = TextAlignment.Center });
         doc.Blocks.Add(new Paragraph(new Run($"Ticket: {SelectedWaybill.TicketNumber}\nPlate: {SelectedWaybill.TruckPlate}\nDriver: {SelectedWaybill.DriverName}\nTazkira: {SelectedWaybill.DriverTazkira}\nBuyer: {SelectedWaybill.CounterpartyName}\nGrade: {SelectedWaybill.SaltGrade}\nDest: {SelectedWaybill.DestinationType}\nGross: {SelectedWaybill.GrossWeightKg:N0} kg\nTare: {SelectedWaybill.TareWeightKg:N0} kg\nNET: {SelectedWaybill.NetWeightKg:N0} kg ({SelectedWaybill.NetWeightKg / 1000.0:F2} MT)\nFX: 1 USD = {SelectedWaybill.LockedUsdToAfn} AFN\nSHA256: {SelectedWaybill.QrPayloadHash}")));
+
+        if (SelectedWaybillQrImage is not null)
+        {
+            var qrImg = new System.Windows.Controls.Image { Source = SelectedWaybillQrImage, Width = 128, Height = 128 };
+            doc.Blocks.Add(new BlockUIContainer(qrImg) { TextAlignment = TextAlignment.Center });
+        }
+
         dlg.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, SelectedWaybill.TicketNumber);
-        ShowToast($"Printed {SelectedWaybill.TicketNumber}");
+        ShowToast($"Printed {SelectedWaybill.TicketNumber} with scannable QR");
+    }
+
+    private void PrintWorkerPayslip(EmployeePayroll? emp)
+    {
+        if (emp is null) return;
+        var dlg = new PrintDialog();
+        if (dlg.ShowDialog() != true) return;
+        var doc = new FlowDocument
+        {
+            PageWidth = 340, PagePadding = new Thickness(16), FlowDirection = WindowFlowDirection,
+            FontFamily = new FontFamily("Segoe UI"), FontSize = 11.5
+        };
+        doc.Blocks.Add(new Paragraph(new Bold(new Run("HERAT SALT MINE — WORKER PAYSLIP (AFN)"))) { TextAlignment = TextAlignment.Center });
+        doc.Blocks.Add(new Paragraph(new Run(
+            $"Date: {DateTime.Now:yyyy-MM-dd}\nEmployee: {emp.FullName} ({emp.EmployeeCode})\nTazkira: {emp.TazkiraNo}\nPosition: {emp.RoleTitle}\n" +
+            $"Days Worked: {emp.DaysWorked} x {emp.DailyWageAfn:N0} AFN = {emp.DaysWorked * emp.DailyWageAfn:N0} AFN\n" +
+            $"Extraction Bonus: +{emp.TonBonusAfn:N0} AFN\nAdvances / Deductions: -{emp.AdvancesDeductionAfn:N0} AFN\n" +
+            $"--------------------------------------\nNET PAYABLE: {emp.NetPayableAfn:N0} AFN")));
+        dlg.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, $"Payslip-{emp.EmployeeCode}");
+        ShowToast($"Printed AFN payslip for {emp.FullName}");
+    }
+
+    private void AddSupplierBill()
+    {
+        if (!CanViewFinancials || NewBillAmountAfn <= 0) { ShowToast("Owner/Finance role & valid amount required."); return; }
+        var bill = new SupplierBill
+        {
+            BillNumber = $"AP-2026-{304 + SupplierBills.Count}",
+            SupplierName = NewBillSupplier.Trim(),
+            Category = NewBillCategory,
+            AmountAfn = NewBillAmountAfn,
+            DueDate = NewBillDueDate,
+            Status = "UNPAID"
+        };
+        SupplierBills.Insert(0, bill);
+        _snapshot.SupplierBills.Insert(0, bill);
+        AddAudit("supplier_bills", bill.BillNumber, "INSERT", $"Recorded AP bill {bill.AmountAfn:N0} AFN ({bill.SupplierName})");
+        PersistAndRefresh();
+        ShowToast($"Recorded vendor bill {bill.BillNumber}");
+    }
+
+    private void PaySupplierBill(SupplierBill? bill)
+    {
+        if (bill is null || !CanViewFinancials || bill.Status == "PAID") return;
+        bill.Status = "PAID";
+        bill.PaymentRef = $"HW-AP-{DateTime.Now:HHmm}";
+        var fin = new FinancialEntry
+        {
+            EntryType = "SUPPLIER_BILL",
+            Counterparty = bill.SupplierName,
+            Currency = "AFN",
+            Amount = bill.AmountAfn,
+            LockedUsdToAfn = UsdToAfn,
+            Method = "HAWALA",
+            Reference = bill.PaymentRef
+        };
+        FinancialLedger.Insert(0, fin);
+        _snapshot.FinancialLedger.Insert(0, fin);
+        AddAudit("supplier_bills", bill.BillNumber, "STATUS_UPDATE", $"Paid vendor bill {bill.BillNumber} ({bill.AmountAfn:N0} AFN)");
+        PersistAndRefresh();
+        ShowToast($"Paid {bill.BillNumber} via Hawala");
+    }
+
+    private void SaveSettings()
+    {
+        _snapshot.Settings.ComPort = SettingsComPort;
+        _snapshot.Settings.BaudRate = SettingsBaudRate;
+        _snapshot.Settings.SyncApiBaseUrl = SettingsSyncUrl.Trim();
+        PersistAndRefresh();
+        ShowToast($"Saved Scale ({SettingsComPort} @ {SettingsBaudRate}) & Sync URL");
+    }
+
+    private void AddOperator()
+    {
+        if (ActiveRole != UserRole.MINE_OWNER) { ShowToast("Only Mine Owner can add operators."); return; }
+        if (string.IsNullOrWhiteSpace(NewOpEmail) || string.IsNullOrWhiteSpace(NewOpName)) return;
+        var op = new OperatorAccount { Email = NewOpEmail.Trim().ToLowerInvariant(), FullName = NewOpName.Trim(), Role = NewOpRole, IsActive = true };
+        Operators.Insert(0, op);
+        _snapshot.Operators.Insert(0, op);
+        AddAudit("users", op.Email, "INSERT", $"Added operator {op.FullName} ({op.Role})");
+        NewOpEmail = "";
+        NewOpName = "";
+        OnPropertyChanged(nameof(NewOpEmail));
+        OnPropertyChanged(nameof(NewOpName));
+        PersistAndRefresh();
+        ShowToast($"Added operator {op.FullName}");
+    }
+
+    private void ToggleOperator(OperatorAccount? op)
+    {
+        if (op is null || ActiveRole != UserRole.MINE_OWNER) { ShowToast("Only Mine Owner can manage operators."); return; }
+        op.IsActive = !op.IsActive;
+        AddAudit("users", op.Email, "STATUS_UPDATE", $"Set {op.Email} Active={op.IsActive}");
+        PersistAndRefresh();
+        ShowToast($"{op.Email} {(op.IsActive ? "Activated" : "Deactivated")}");
     }
 
     private void AddAudit(string table, string recordRef, string action, string summary)
@@ -771,6 +926,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var entry = new AuditLogEntry { Timestamp = DateTime.Now.ToString("HH:mm:ss"), TableName = table, RecordRef = recordRef, Action = action, Summary = summary, Actor = ActiveRole.ToString() };
         AuditLogs.Insert(0, entry);
         _snapshot.AuditLogs.Insert(0, entry);
+        _dataService.AppendAuditRowSqlite(entry);
     }
 
     private void PersistAndRefresh() { _dataService.Save(_snapshot); RefreshKpis(); }

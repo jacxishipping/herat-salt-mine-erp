@@ -8,12 +8,14 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>HeratSaltErp</AssemblyName>
     <RootNamespace>HeratSaltErp</RootNamespace>
-    <Version>3.0.0</Version>
+    <Version>4.0.0</Version>
     <Authors>Herat Salt Mine Operations (Ghoryan &amp; Kuhsan)</Authors>
-    <Description>Offline-first Salt Mine ERP &amp; Digital Weighbridge (Kanta) Desktop Application in C# WPF with AI Bridge UI Design System</Description>
+    <Description>Offline-first Salt Mine ERP &amp; Digital Weighbridge (Kanta) Desktop Application in C# WPF with SQLite, Scannable QR Codes, RS-232 COM Scale Bridge, and AI Bridge UI</Description>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
+    <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="System.IO.Ports" Version="8.0.0" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>

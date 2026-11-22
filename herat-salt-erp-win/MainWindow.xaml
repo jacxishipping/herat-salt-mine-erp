@@ -60,9 +60,13 @@
                     <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                  Content="{Binding Strings[NavFinance]}" Command="{Binding SelectTabCommand}" CommandParameter="Finance" />
                     <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                 Content="{Binding Strings[NavSuppliers]}" Command="{Binding SelectTabCommand}" CommandParameter="Suppliers" />
+                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                  Content="{Binding Strings[NavHrHse]}" Command="{Binding SelectTabCommand}" CommandParameter="HrHse" />
                     <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                  Content="{Binding Strings[NavAudit]}" Command="{Binding SelectTabCommand}" CommandParameter="Audit" />
+                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                 Content="{Binding Strings[NavSettings]}" Command="{Binding SelectTabCommand}" CommandParameter="Settings" />
                 </StackPanel>
 
                 <!-- DPAPI Operator Login + Site Sync Link -->
@@ -688,7 +692,15 @@
                                     <DataGridTextColumn Header="Employee" Binding="{Binding FullName}" Width="*" />
                                     <DataGridTextColumn Header="Position" Binding="{Binding RoleTitle}" Width="180" />
                                     <DataGridTextColumn Header="Days" Binding="{Binding DaysWorked}" Width="60" />
-                                    <DataGridTextColumn Header="Net Payable (AFN)" Binding="{Binding NetPayableAfn, StringFormat=N0}" Width="130" />
+                                    <DataGridTextColumn Header="Net Payable (AFN)" Binding="{Binding NetPayableAfn, StringFormat=N0}" Width="125" />
+                                    <DataGridTemplateColumn Header="Payslip" Width="115">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Print Payslip" Style="{StaticResource SecondaryButtonStyle}" Padding="7,3"
+                                                        Command="{Binding DataContext.PrintPayslipCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>
@@ -718,7 +730,52 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- 7. IMMUTABLE AUDIT LOG -->
+                    <!-- 8. SUPPLIERS & ACCOUNTS PAYABLE (AP) -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Suppliers}">
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="32"
+                                Visibility="{Binding CannotViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Access Restricted: Only Mine Owner or Finance Officer can manage supplier bills &amp; AP."
+                                       HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <StackPanel Visibility="{Binding CanViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding Strings[NavSuppliers]}" Style="{StaticResource PageTitleStyle}" />
+                            <TextBlock Text="Track diesel fuel, blasting explosives, 25kg/50kg woven bags, and potassium iodate supplier bills."
+                                       Style="{StaticResource SubtitleStyle}" Margin="0,4,0,14" />
+
+                            <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                                <UniformGrid Columns="5">
+                                    <TextBox Text="{Binding NewBillSupplier, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
+                                    <ComboBox ItemsSource="{Binding SupplierCategories}" SelectedItem="{Binding NewBillCategory}" Style="{StaticResource SaaSComboBoxStyle}" Margin="0,0,6,0" />
+                                    <TextBox Text="{Binding NewBillAmountAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
+                                    <TextBox Text="{Binding NewBillDueDate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
+                                    <Button Content="+ Record Vendor Bill" Command="{Binding AddSupplierBillCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                </UniformGrid>
+                            </Border>
+
+                            <Border Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                                <DataGrid ItemsSource="{Binding SupplierBills}" Style="{StaticResource SaaSDataGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Bill #" Binding="{Binding BillNumber}" Width="115" />
+                                        <DataGridTextColumn Header="Supplier" Binding="{Binding SupplierName}" Width="*" />
+                                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="140" />
+                                        <DataGridTextColumn Header="Amount (AFN)" Binding="{Binding AmountAfn, StringFormat=N0}" Width="115" />
+                                        <DataGridTextColumn Header="Due Date" Binding="{Binding DueDate}" Width="95" />
+                                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="80" />
+                                        <DataGridTemplateColumn Header="Pay AP" Width="125">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="Pay Hawala" Style="{StaticResource PrimaryButtonStyle}" Padding="7,3"
+                                                            Command="{Binding DataContext.PaySupplierBillCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 9. IMMUTABLE AUDIT LOG -->
                     <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Audit}">
                         <Border Style="{StaticResource SurfaceCardStyle}" Padding="32"
                                 Visibility="{Binding CannotViewAuditLogs, Converter={StaticResource BoolToVis}}">
@@ -727,7 +784,7 @@
                         </Border>
                         <StackPanel Visibility="{Binding CanViewAuditLogs, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="{Binding Strings[NavAudit]}" Style="{StaticResource PageTitleStyle}" />
-                            <TextBlock Text="Append-only anti-fraud audit trail for all weighbridge, finance, fleet, and offline sync events."
+                            <TextBlock Text="Append-only SQLite + anti-fraud audit trail for all weighbridge, finance, fleet, and offline sync events."
                                        Style="{StaticResource SubtitleStyle}" Margin="0,4,0,14" />
                             <Border Style="{StaticResource SurfaceCardStyle}" Padding="0">
                                 <DataGrid ItemsSource="{Binding AuditLogs}" Style="{StaticResource SaaSDataGridStyle}">
@@ -741,6 +798,62 @@
                                 </DataGrid>
                             </Border>
                         </StackPanel>
+                    </StackPanel>
+
+                    <!-- 10. SETTINGS, SCALE COM PORT & OPERATOR ADMIN -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Settings}">
+                        <TextBlock Text="{Binding Strings[NavSettings]}" Style="{StaticResource PageTitleStyle}" />
+                        <TextBlock Text="Configure physical RS-232 Weighbridge (Kanta) COM port, baud rate, cloud sync endpoint &amp; RBAC operators."
+                                   Style="{StaticResource SubtitleStyle}" Margin="0,4,0,14" />
+
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="WEIGHBRIDGE HARDWARE &amp; CLOUD SYNC" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="4">
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Kanta COM Port" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding AvailableComPorts}" SelectedItem="{Binding SettingsComPort}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Baud Rate" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding BaudRates}" SelectedItem="{Binding SettingsBaudRate}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Central ERP Sync URL" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SettingsSyncUrl, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <Button Content="Save Hardware Settings" Command="{Binding SaveSettingsCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="MINE OPERATORS &amp; RBAC ACCOUNTS (OWNER ADMIN)" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="4" Margin="0,0,0,12">
+                                    <TextBox Text="{Binding NewOpName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
+                                    <TextBox Text="{Binding NewOpEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
+                                    <ComboBox ItemsSource="{Binding AllRoles}" SelectedItem="{Binding NewOpRole}" Style="{StaticResource SaaSComboBoxStyle}" Margin="0,0,6,0" />
+                                    <Button Content="+ Add Operator" Command="{Binding AddOperatorCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                </UniformGrid>
+                                <DataGrid ItemsSource="{Binding Operators}" Style="{StaticResource SaaSDataGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
+                                        <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="210" />
+                                        <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="165" />
+                                        <DataGridTextColumn Header="Active" Binding="{Binding IsActive}" Width="75" />
+                                        <DataGridTemplateColumn Header="Action" Width="115">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="Toggle Active" Style="{StaticResource SecondaryButtonStyle}" Padding="7,3"
+                                                            Command="{Binding DataContext.ToggleOperatorCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                 </Grid>
@@ -762,12 +875,12 @@
             </Border>
         </Grid>
 
-        <!-- SLIDE-OVER QR WAYBILL DRAWER -->
+        <!-- SLIDE-OVER SCANNABLE QR WAYBILL DRAWER -->
         <Grid Grid.ColumnSpan="2" Background="#8C000000" Visibility="{Binding IsWaybillDrawerOpen, Converter={StaticResource BoolToVis}}">
-            <Border Width="400" HorizontalAlignment="Right" Background="{DynamicResource BgCardBrush}"
+            <Border Width="410" HorizontalAlignment="Right" Background="{DynamicResource BgCardBrush}"
                     BorderBrush="{DynamicResource BorderHairBrush}" BorderThickness="1,0,0,0" Padding="20">
                 <DockPanel>
-                    <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
                         <StackPanel>
                             <TextBlock Text="Official QR Waybill / Bilty" FontSize="15" FontWeight="SemiBold" />
                             <TextBlock Text="{Binding SelectedWaybill.TicketNumber}" Style="{StaticResource MonoTextStyle}" FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}" />
@@ -775,22 +888,25 @@
                         <Button Content="✕" Command="{Binding CloseWaybillCommand}" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Right" Padding="8,4" />
                     </Grid>
 
-                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
                         <Button Content="{Binding Strings[PrintWaybill]}" Command="{Binding PrintWaybillCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
                         <Button Content="Close" Command="{Binding CloseWaybillCommand}" Style="{StaticResource SecondaryButtonStyle}" />
                     </StackPanel>
 
                     <StackPanel>
-                        <Border Style="{StaticResource TerminalBoxStyle}" Margin="0,0,0,14">
+                        <Border Background="White" CornerRadius="10" Padding="10" HorizontalAlignment="Center" Margin="0,0,0,12">
+                            <Image Source="{Binding SelectedWaybillQrImage}" Width="148" Height="148" Stretch="Uniform" />
+                        </Border>
+                        <Border Style="{StaticResource TerminalBoxStyle}" Margin="0,0,0,12" Padding="10">
                             <TextBlock Style="{StaticResource MonoTextStyle}" Foreground="#CBD5E1" FontSize="11" TextAlignment="Center">
                                 <Run Text="SHA-256 SEAL: " /><Run Text="{Binding SelectedWaybill.QrPayloadHash}" />
                             </TextBlock>
                         </Border>
-                        <TextBlock Text="{Binding SelectedWaybill.TruckPlate, StringFormat='Truck Plate: {0}'}" Margin="0,0,0,6" />
-                        <TextBlock Text="{Binding SelectedWaybill.DriverName, StringFormat='Driver: {0}'}" Margin="0,0,0,6" />
-                        <TextBlock Text="{Binding SelectedWaybill.DriverTazkira, StringFormat='Tazkira ID: {0}'}" Margin="0,0,0,6" />
-                        <TextBlock Text="{Binding SelectedWaybill.CounterpartyName, StringFormat='Buyer: {0}'}" Margin="0,0,0,6" />
-                        <TextBlock Text="{Binding SelectedWaybill.DestinationType, StringFormat='Destination: {0}'}" Margin="0,0,0,14" />
+                        <TextBlock Text="{Binding SelectedWaybill.TruckPlate, StringFormat='Truck Plate: {0}'}" Margin="0,0,0,5" />
+                        <TextBlock Text="{Binding SelectedWaybill.DriverName, StringFormat='Driver: {0}'}" Margin="0,0,0,5" />
+                        <TextBlock Text="{Binding SelectedWaybill.DriverTazkira, StringFormat='Tazkira ID: {0}'}" Margin="0,0,0,5" />
+                        <TextBlock Text="{Binding SelectedWaybill.CounterpartyName, StringFormat='Buyer: {0}'}" Margin="0,0,0,5" />
+                        <TextBlock Text="{Binding SelectedWaybill.DestinationType, StringFormat='Destination: {0}'}" Margin="0,0,0,12" />
                         <Border Style="{StaticResource SurfaceCardStyle}">
                             <StackPanel>
                                 <TextBlock Text="{Binding SelectedWaybill.GrossWeightKg, StringFormat='Gross: {0:N0} kg'}" Style="{StaticResource MonoTextStyle}" />

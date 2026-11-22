@@ -1,23 +1,35 @@
 using System;
+using System.Collections.Generic;
 using System.IO.Ports;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace HeratSaltErp.Services;
 
 /// <summary>
-/// Reads live weight frames from a physical RS-232 digital weighbridge (Kanta)
-/// indicator on Windows COM ports (e.g., COM3, 9600 baud), with automatic
-/// simulated fallback when testing without attached scale hardware.
+/// Configurable native Windows COM-port RS-232 weighbridge (Kanta) reader
+/// with automatic simulated fallback when scale hardware is not connected.
 /// </summary>
 public sealed class KantaSerialService
 {
     private static readonly Regex WeightPattern = new(@"([+-]?\d+(?:\.\d+)?)", RegexOptions.Compiled);
 
-    public (double WeightKg, string Mode, string ScaleId) CaptureWeight(string comPort = "COM3")
+    public IReadOnlyList<string> GetAvailablePorts()
     {
         try
         {
-            using var port = new SerialPort(comPort, 9600, Parity.None, 8, StopBits.One)
+            var ports = SerialPort.GetPortNames();
+            if (ports.Length > 0) return ports.OrderBy(p => p).ToArray();
+        }
+        catch { /* ignore on restricted systems */ }
+        return new[] { "COM1", "COM2", "COM3", "COM4", "COM5", "COM6" };
+    }
+
+    public (double WeightKg, string Mode, string ScaleId) CaptureWeight(string comPort = "COM3", int baudRate = 9600)
+    {
+        try
+        {
+            using var port = new SerialPort(comPort, baudRate, Parity.None, 8, StopBits.One)
             {
                 ReadTimeout = 1500
             };
@@ -26,15 +38,15 @@ public sealed class KantaSerialService
             var match = WeightPattern.Match(line);
             if (match.Success && double.TryParse(match.Groups[1].Value, out var parsed))
             {
-                return (Math.Abs(Math.Round(parsed)), $"HARDWARE_{comPort}", "KANTA-GHR-01");
+                return (Math.Abs(Math.Round(parsed)), $"HARDWARE_{comPort}_{baudRate}", "KANTA-GHR-01");
             }
         }
         catch
         {
-            // Fallback to simulated RS-232 scale reading when COM hardware is absent
+            // Fallback to simulated RS-232 reading when physical Kanta is absent
         }
 
         var simulated = 37600 + Random.Shared.Next(0, 1850);
-        return (simulated, "SIMULATED_RS232", "KANTA-GHR-01");
+        return (simulated, $"SIMULATED_{comPort}_{baudRate}", "KANTA-GHR-01");
     }
 }
