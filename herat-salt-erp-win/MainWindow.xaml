@@ -23,8 +23,8 @@
         <!-- AI BRIDGE UI SIDEBAR -->
         <Border Grid.Column="0" Background="{DynamicResource BgSidebarBrush}"
                 BorderBrush="{DynamicResource BorderHairBrush}" BorderThickness="0,0,1,0" Padding="12,16">
-            <DockPanel LastChildFill="False">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,8,20">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,8,16">
                     <Border Width="30" Height="30" CornerRadius="8" Background="{DynamicResource AccentBrush}">
                         <TextBlock Text="HS" Foreground="White" FontWeight="SemiBold" FontSize="12"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -35,44 +35,8 @@
                     </StackPanel>
                 </StackPanel>
 
-                <TextBlock DockPanel.Dock="Top" Text="OPERATIONS" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
-                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
-                    <RadioButton GroupName="Nav" IsChecked="True" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavDashboard]}" Command="{Binding SelectTabCommand}" CommandParameter="Dashboard" />
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavWeighbridge]}" Command="{Binding SelectTabCommand}" CommandParameter="Weighbridge" />
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavExtraction]}" Command="{Binding SelectTabCommand}" CommandParameter="Extraction" />
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavProcessing]}" Command="{Binding SelectTabCommand}" CommandParameter="Processing" />
-                </StackPanel>
-
-                <TextBlock DockPanel.Dock="Top" Text="COMMERCIAL &amp; SALES" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
-                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavSales]}" Command="{Binding SelectTabCommand}" CommandParameter="Sales" />
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavCustomers]}" Command="{Binding SelectTabCommand}" CommandParameter="Customers" />
-                </StackPanel>
-
-                <TextBlock DockPanel.Dock="Top" Text="FINANCE &amp; GOVERNANCE" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
-                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavFinance]}" Command="{Binding SelectTabCommand}" CommandParameter="Finance" />
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavAccounting]}" Command="{Binding SelectTabCommand}" CommandParameter="Accounting" />
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavSuppliers]}" Command="{Binding SelectTabCommand}" CommandParameter="Suppliers" />
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavHrHse]}" Command="{Binding SelectTabCommand}" CommandParameter="HrHse" />
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavAudit]}" Command="{Binding SelectTabCommand}" CommandParameter="Audit" />
-                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
-                                 Content="{Binding Strings[NavSettings]}" Command="{Binding SelectTabCommand}" CommandParameter="Settings" />
-                </StackPanel>
-
                 <!-- DPAPI Operator Login + Site Sync Link -->
-                <StackPanel DockPanel.Dock="Bottom">
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
                     <Button Content="{Binding OperatorBadge}" Command="{Binding OpenLoginCommand}"
                             Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,0,8" />
 
@@ -95,6 +59,55 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
+
+                <!-- SCROLLABLE NAVIGATION -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock Text="OPERATIONS" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
+                        <StackPanel Margin="0,0,0,12">
+                            <RadioButton GroupName="Nav" IsChecked="True" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavDashboard]}" Command="{Binding SelectTabCommand}" CommandParameter="Dashboard" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavWeighbridge]}" Command="{Binding SelectTabCommand}" CommandParameter="Weighbridge" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavExtraction]}" Command="{Binding SelectTabCommand}" CommandParameter="Extraction" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavProcessing]}" Command="{Binding SelectTabCommand}" CommandParameter="Processing" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavQcLab]}" Command="{Binding SelectTabCommand}" CommandParameter="QcLab" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavStores]}" Command="{Binding SelectTabCommand}" CommandParameter="Stores" />
+                        </StackPanel>
+
+                        <TextBlock Text="COMMERCIAL &amp; EXPORTS" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
+                        <StackPanel Margin="0,0,0,12">
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavSales]}" Command="{Binding SelectTabCommand}" CommandParameter="Sales" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavCustomers]}" Command="{Binding SelectTabCommand}" CommandParameter="Customers" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavExports]}" Command="{Binding SelectTabCommand}" CommandParameter="Exports" />
+                        </StackPanel>
+
+                        <TextBlock Text="FINANCE &amp; GOVERNANCE" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
+                        <StackPanel Margin="0,0,0,10">
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavFinance]}" Command="{Binding SelectTabCommand}" CommandParameter="Finance" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavAccounting]}" Command="{Binding SelectTabCommand}" CommandParameter="Accounting" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavSuppliers]}" Command="{Binding SelectTabCommand}" CommandParameter="Suppliers" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavReports]}" Command="{Binding SelectTabCommand}" CommandParameter="Reports" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavHrHse]}" Command="{Binding SelectTabCommand}" CommandParameter="HrHse" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavAudit]}" Command="{Binding SelectTabCommand}" CommandParameter="Audit" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavSettings]}" Command="{Binding SelectTabCommand}" CommandParameter="Settings" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
             </DockPanel>
         </Border>
 
@@ -1179,6 +1192,310 @@
                                 </DataGrid>
                             </StackPanel>
                         </Border>
+                    </StackPanel>
+
+                    <!-- 11. QC LAB & CERTIFICATE OF ANALYSIS (CoA) -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=QcLab}">
+                        <TextBlock Text="{Binding Strings[NavQcLab]}" Style="{StaticResource PageTitleStyle}" />
+                        <TextBlock Text="Batch lab analysis for NaCl purity (%), moisture (%), iodine (30–60 ppm WHO/MoPH spec) &amp; printable Certificate of Analysis (CoA)."
+                                   Style="{StaticResource SubtitleStyle}" Margin="0,4,0,14" />
+
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="LOG NEW QC LAB SAMPLE TEST" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="7">
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Batch Code" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding QcBatchCode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Salt Grade" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding SaltGrades}" SelectedItem="{Binding QcSaltGrade}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="NaCl Purity (%)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding QcNaClPct, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Moisture (%)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding QcMoisturePct, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Iodine (ppm)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding QcIodinePpm, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Insoluble (%)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding QcInsolublePct, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <Button Content="+ Log QC Test" Command="{Binding LogQcTestCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                            <DataGrid ItemsSource="{Binding QcLabTests}" Style="{StaticResource SaaSDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="CoA #" Binding="{Binding TestCode}" Width="125" />
+                                    <DataGridTextColumn Header="Batch" Binding="{Binding BatchCode}" Width="120" />
+                                    <DataGridTextColumn Header="Salt Grade" Binding="{Binding SaltGrade}" Width="*" />
+                                    <DataGridTextColumn Header="NaCl %" Binding="{Binding NaClPurityPct, StringFormat=F1}" Width="70" />
+                                    <DataGridTextColumn Header="Moist %" Binding="{Binding MoisturePct, StringFormat=F1}" Width="70" />
+                                    <DataGridTextColumn Header="I2 ppm" Binding="{Binding IodinePpm, StringFormat=F1}" Width="70" />
+                                    <DataGridTextColumn Header="Verdict" Binding="{Binding Status}" Width="135" />
+                                    <DataGridTemplateColumn Header="Certificate" Width="115">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Print CoA" Style="{StaticResource SecondaryButtonStyle}" Padding="7,3"
+                                                        Command="{Binding DataContext.PrintCoaCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- 12. MINE CONSUMABLES & SPARE PARTS STORE -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Stores}">
+                        <Grid Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Strings[NavStores]}" Style="{StaticResource PageTitleStyle}" />
+                                <TextBlock Text="Live inventory for Ghoryan diesel tank, 25kg/50kg woven bags, potassium iodate (KIO3), explosives &amp; CAT/Komatsu spare parts."
+                                           Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <Border Style="{StaticResource TerminalBoxStyle}" Padding="10,6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding LowStockAlertText}" Style="{StaticResource MonoTextStyle}" FontSize="11.5" Foreground="#F59E0B" />
+                            </Border>
+                        </Grid>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="ADD NEW CONSUMABLE / SPARE PART SKU" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="7">
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Item Name" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewStoreItemName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Category" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding SupplierCategories}" SelectedItem="{Binding NewStoreCategory}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Unit" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewStoreUnit, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Opening Qty" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewStoreQty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Reorder Level" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewStoreReorder, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Unit Cost (AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewStoreUnitCost, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <Button Content="+ Add SKU" Command="{Binding AddConsumableCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                            <DataGrid ItemsSource="{Binding ConsumableItems}" Style="{StaticResource SaaSDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="SKU" Binding="{Binding SkuCode}" Width="105" />
+                                    <DataGridTextColumn Header="Item Name" Binding="{Binding ItemName}" Width="*" />
+                                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="130" />
+                                    <DataGridTextColumn Header="Stock" Binding="{Binding StockQty, StringFormat=N1}" Width="80" />
+                                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="65" />
+                                    <DataGridTextColumn Header="Reorder" Binding="{Binding ReorderLevel, StringFormat=N0}" Width="75" />
+                                    <DataGridTextColumn Header="Status" Binding="{Binding StockStatus}" Width="90" />
+                                    <DataGridTemplateColumn Header="Movement" Width="170">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="+ Restock" Style="{StaticResource PrimaryButtonStyle}" Padding="7,3" Margin="0,0,4,0"
+                                                            Command="{Binding DataContext.RestockConsumableCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                    <Button Content="- Issue" Style="{StaticResource SecondaryButtonStyle}" Padding="7,3"
+                                                            Command="{Binding DataContext.IssueConsumableCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- 13. EXPORT CUSTOMS & LOGISTICS (ISLAM QALA / TORGHUNDI) -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Exports}">
+                        <Grid Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Strings[NavExports]}" Style="{StaticResource PageTitleStyle}" />
+                                <TextBlock Text="Track ASYCUDA customs declarations, Islam Qala &amp; Torghundi border clearance, and auto-post export freight to General Ledger."
+                                           Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <Border Style="{StaticResource TerminalBoxStyle}" Padding="10,6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TotalExportTonnageText}" Style="{StaticResource MonoTextStyle}" FontSize="11.5" Foreground="#10B981" />
+                            </Border>
+                        </Grid>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="REGISTER EXPORT BORDER SHIPMENT" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="7">
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Customs Decl #" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding ExpCustomsDecl, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Border Post" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding BorderPosts}" SelectedItem="{Binding ExpBorderPost}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Export Buyer" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding ExpBuyer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Truck Plate" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding ExpTruckPlate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Tonnage (MT)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding ExpTonnageMt, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Freight (AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding ExpFreightAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <Button Content="+ Create Export" Command="{Binding CreateExportShipmentCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                            <DataGrid ItemsSource="{Binding ExportShipments}" Style="{StaticResource SaaSDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Shipment #" Binding="{Binding ShipmentCode}" Width="115" />
+                                    <DataGridTextColumn Header="Customs Decl #" Binding="{Binding CustomsDeclNo}" Width="140" />
+                                    <DataGridTextColumn Header="Border" Binding="{Binding BorderPost}" Width="135" />
+                                    <DataGridTextColumn Header="Buyer" Binding="{Binding BuyerName}" Width="*" />
+                                    <DataGridTextColumn Header="Plate" Binding="{Binding TruckPlate}" Width="85" />
+                                    <DataGridTextColumn Header="MT" Binding="{Binding TonnageMt, StringFormat=F1}" Width="55" />
+                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120" />
+                                    <DataGridTemplateColumn Header="Workflow" Width="125">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Advance Stage" Style="{StaticResource PrimaryButtonStyle}" Padding="7,3"
+                                                        Command="{Binding DataContext.AdvanceShipmentStatusCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- 14. EXECUTIVE REPORTS, PROFITABILITY & AR/AP AGING -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Reports}">
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="32"
+                                Visibility="{Binding CannotViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Access Restricted: Only Mine Owner or Finance Officer can view Executive Reports &amp; Aging Analytics."
+                                       HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <StackPanel Visibility="{Binding CanViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <Grid Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Strings[NavReports]}" Style="{StaticResource PageTitleStyle}" />
+                                    <TextBlock Text="Salt grade profitability analysis, Customer AR exposure, Supplier AP aging &amp; one-click executive printing."
+                                               Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Button Content="Print Executive Report" Command="{Binding PrintExecutiveReportCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                                    <Button Content="Export Audit CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <UniformGrid Columns="4" Margin="0,0,0,14">
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total AR Outstanding" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding TotalArOutstandingText}" Style="{StaticResource MonoTextStyle}" FontSize="17" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Unpaid Supplier AP" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding TotalApUnpaidText}" Style="{StaticResource MonoTextStyle}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="GL Net Profit (P&amp;L)" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GlNetProfitText}" Style="{StaticResource MonoTextStyle}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Export Volume Tracked" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding TotalExportTonnageText}" Style="{StaticResource MonoTextStyle}" FontSize="14" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+
+                            <Border Style="{StaticResource SurfaceCardStyle}" Padding="0" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="PROFITABILITY BY SALT GRADE (KANTA DISPATCHED)" Style="{StaticResource SectionHeaderStyle}" Margin="14,12,14,8" />
+                                    <DataGrid ItemsSource="{Binding GradeProfitability}" Style="{StaticResource SaaSDataGridStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Salt Grade" Binding="{Binding SaltGrade}" Width="*" />
+                                            <DataGridTextColumn Header="Dispatched MT" Binding="{Binding DispatchedMt, StringFormat=F2}" Width="115" />
+                                            <DataGridTextColumn Header="Revenue (AFN)" Binding="{Binding RevenueAfn, StringFormat=N0}" Width="130" />
+                                            <DataGridTextColumn Header="Est. Cost (AFN)" Binding="{Binding EstCostAfn, StringFormat=N0}" Width="130" />
+                                            <DataGridTextColumn Header="Est. Profit (AFN)" Binding="{Binding EstProfitAfn, StringFormat=N0}" Width="130" />
+                                            <DataGridTextColumn Header="Margin %" Binding="{Binding MarginPct, StringFormat='{}{0:F1}%'}" Width="90" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="14" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                                    <StackPanel>
+                                        <TextBlock Text="CUSTOMER AR CREDIT &amp; RECEIVABLES" Style="{StaticResource SectionHeaderStyle}" Margin="14,12,14,8" />
+                                        <DataGrid ItemsSource="{Binding Customers}" Style="{StaticResource SaaSDataGridStyle}">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Customer" Binding="{Binding CompanyName}" Width="*" />
+                                                <DataGridTextColumn Header="Outstanding AFN" Binding="{Binding OutstandingAfn, StringFormat=N0}" Width="115" />
+                                                <DataGridTextColumn Header="Util %" Binding="{Binding CreditPct, StringFormat='{}{0:F0}%'}" Width="65" />
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="2" Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                                    <StackPanel>
+                                        <TextBlock Text="SUPPLIER AP BILLS &amp; DUE DATES" Style="{StaticResource SectionHeaderStyle}" Margin="14,12,14,8" />
+                                        <DataGrid ItemsSource="{Binding SupplierBills}" Style="{StaticResource SaaSDataGridStyle}">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Supplier" Binding="{Binding SupplierName}" Width="*" />
+                                                <DataGridTextColumn Header="Due Date" Binding="{Binding DueDate}" Width="90" />
+                                                <DataGridTextColumn Header="Amount AFN" Binding="{Binding AmountAfn, StringFormat=N0}" Width="95" />
+                                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="70" />
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
                     </StackPanel>
 
                 </Grid>

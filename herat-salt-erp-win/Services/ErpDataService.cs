@@ -100,6 +100,9 @@ public sealed class ErpDataService
                         loaded.ChartOfAccounts = fresh.ChartOfAccounts;
                         loaded.JournalEntries = fresh.JournalEntries;
                     }
+                    if (loaded.QcLabTests.Count == 0) loaded.QcLabTests = BuildSeedSnapshot().QcLabTests;
+                    if (loaded.ExportShipments.Count == 0) loaded.ExportShipments = BuildSeedSnapshot().ExportShipments;
+                    if (loaded.ConsumableItems.Count == 0) loaded.ConsumableItems = BuildSeedSnapshot().ConsumableItems;
                     return loaded;
                 }
             }
@@ -350,6 +353,26 @@ public sealed class ErpDataService
             new() { EntryNumber = "JE-2026-0003", Date = "2026-11-18 08:00", DebitAccountCode = "1020", DebitAccountName = "Hawala Saraf Clearing", CreditAccountCode = "1200", CreditAccountName = "Accounts Receivable (Buyers)", AmountAfn = 321750, Memo = "Khorasan Food Industries ($4,500 Hawala #HW-9921)", PostedBy = "Finance Officer" },
             new() { EntryNumber = "JE-2026-0002", Date = "2026-11-18 07:50", DebitAccountCode = "1200", DebitAccountName = "Accounts Receivable (Buyers)", CreditAccountCode = "4000", CreditAccountName = "Salt Sales Revenue", AmountAfn = 170000, Memo = "Kanta Dispatch KNT-2026-001842 (25 MT Refined Iodized)", PostedBy = "System Auto-Post" },
             new() { EntryNumber = "JE-2026-0001", Date = "2026-11-01 08:00", DebitAccountCode = "1010", DebitAccountName = "Azizi / AIB Corporate Bank", CreditAccountCode = "3000", CreditAccountName = "Owner Capital & Equity", AmountAfn = 4200000, Memo = "Opening capital & mine operating liquidity", PostedBy = "Mine Owner" }
+        },
+        QcLabTests = new()
+        {
+            new() { TestCode = "COA-2026-0218", BatchCode = "PRC-2026-0412", SaltGrade = "REFINED_IODIZED_25KG", NaClPurityPct = 98.8, MoisturePct = 1.2, IodinePpm = 42.5, InsolublePct = 0.18, Status = "PASS_FOOD_GRADE", TestedBy = "Dr. Zabiullah Rahimi", TestedAt = "2026-11-18 07:15" },
+            new() { TestCode = "COA-2026-0217", BatchCode = "PRC-2026-0413", SaltGrade = "LIVESTOCK_SALT_BLOCK", NaClPurityPct = 95.4, MoisturePct = 2.6, IodinePpm = 0, InsolublePct = 0.85, Status = "PASS_INDUSTRIAL", TestedBy = "Dr. Zabiullah Rahimi", TestedAt = "2026-11-17 15:40" },
+            new() { TestCode = "COA-2026-0216", BatchCode = "PRC-2026-0411", SaltGrade = "REFINED_IODIZED_1KG", NaClPurityPct = 99.1, MoisturePct = 0.9, IodinePpm = 38.0, InsolublePct = 0.12, Status = "PASS_FOOD_GRADE", TestedBy = "Eng. Jawid Sadat", TestedAt = "2026-11-16 11:20" }
+        },
+        ExportShipments = new()
+        {
+            new() { ShipmentCode = "EXP-2026-0114", CustomsDeclNo = "ISQ-ASY-2026-8841", BorderPost = "ISLAM_QALA_EXPORT", BuyerName = "Khorasan Food Industries (Mashhad)", TruckPlate = "HRT-48291", TonnageMt = 25.0, FreightCostAfn = 19500, Status = "BORDER_CLEARED", UpdatedAt = "2026-11-18 09:10" },
+            new() { ShipmentCode = "EXP-2026-0115", CustomsDeclNo = "TRG-ASY-2026-3310", BorderPost = "TORGHUNDI_EXPORT", BuyerName = "Turkmen Agro-Livestock Corp.", TruckPlate = "HRT-62910", TonnageMt = 28.0, FreightCostAfn = 24600, Status = "IN_TRANSIT", UpdatedAt = "2026-11-18 08:40" },
+            new() { ShipmentCode = "EXP-2026-0116", CustomsDeclNo = "ISQ-ASY-2026-8852", BorderPost = "ISLAM_QALA_EXPORT", BuyerName = "Khorasan Food Industries (Mashhad)", TruckPlate = "HRT-30912", TonnageMt = 26.5, FreightCostAfn = 20500, Status = "AT_MINE", UpdatedAt = "2026-11-18 09:45" }
+        },
+        ConsumableItems = new()
+        {
+            new() { SkuCode = "STR-DSL-001", ItemName = "Main Site Diesel Tank (Ghoryan)", Category = "DIESEL_FUEL", Unit = "Liters", StockQty = 8400, ReorderLevel = 5000, UnitCostAfn = 68 },
+            new() { SkuCode = "STR-BAG-025", ItemName = "25kg Woven Polypropylene Salt Bags", Category = "PACKAGING_BAGS", Unit = "Bags", StockQty = 14200, ReorderLevel = 10000, UnitCostAfn = 11.5 },
+            new() { SkuCode = "STR-KIO-003", ItemName = "Potassium Iodate (KIO3) Food-Grade", Category = "POTASSIUM_IODATE", Unit = "kg", StockQty = 38, ReorderLevel = 50, UnitCostAfn = 4200 },
+            new() { SkuCode = "STR-EXP-009", ItemName = "ANFO Blasting Compound (MoI Custody)", Category = "EXPLOSIVES", Unit = "kg", StockQty = 620, ReorderLevel = 400, UnitCostAfn = 210 },
+            new() { SkuCode = "STR-PRT-336", ItemName = "CAT 336D Hydraulic Filter & Seals Kit", Category = "SPARE_PARTS", Unit = "Kits", StockQty = 2, ReorderLevel = 3, UnitCostAfn = 18500 }
         },
         AuditLogs = new()
         {

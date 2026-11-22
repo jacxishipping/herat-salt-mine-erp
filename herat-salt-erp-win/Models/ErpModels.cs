@@ -295,6 +295,55 @@ public sealed class JournalEntry
     public string PostedBy { get; set; } = "";
 }
 
+public sealed class QcLabTest
+{
+    public string TestCode { get; set; } = "";
+    public string BatchCode { get; set; } = "";
+    public string SaltGrade { get; set; } = "REFINED_IODIZED_25KG";
+    public double NaClPurityPct { get; set; } = 98.6;
+    public double MoisturePct { get; set; } = 1.4;
+    public double IodinePpm { get; set; } = 42.0;
+    public double InsolublePct { get; set; } = 0.22;
+    public string Status { get; set; } = "PASS_FOOD_GRADE";
+    public string TestedBy { get; set; } = "Lab Chemist";
+    public string TestedAt { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+}
+
+public sealed class ExportShipment
+{
+    public string ShipmentCode { get; set; } = "";
+    public string CustomsDeclNo { get; set; } = "";
+    public string BorderPost { get; set; } = "ISLAM_QALA_EXPORT";
+    public string BuyerName { get; set; } = "";
+    public string TruckPlate { get; set; } = "";
+    public double TonnageMt { get; set; }
+    public double FreightCostAfn { get; set; }
+    public string Status { get; set; } = "AT_MINE"; // AT_MINE, IN_TRANSIT, BORDER_CLEARED, DELIVERED
+    public string UpdatedAt { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+}
+
+public sealed class ConsumableItem
+{
+    public string SkuCode { get; set; } = "";
+    public string ItemName { get; set; } = "";
+    public string Category { get; set; } = "DIESEL_FUEL";
+    public string Unit { get; set; } = "Liters";
+    public double StockQty { get; set; }
+    public double ReorderLevel { get; set; }
+    public double UnitCostAfn { get; set; }
+    public string StockStatus => StockQty <= ReorderLevel ? "LOW STOCK" : "HEALTHY";
+}
+
+public sealed class GradeProfitRow
+{
+    public string SaltGrade { get; set; } = "";
+    public double DispatchedMt { get; set; }
+    public double RevenueAfn { get; set; }
+    public double EstCostAfn { get; set; }
+    public double EstProfitAfn => RevenueAfn - EstCostAfn;
+    public double MarginPct => RevenueAfn > 0 ? Math.Round((EstProfitAfn / RevenueAfn) * 100.0, 1) : 0;
+}
+
 public sealed class ErpLocalSnapshot
 {
     public double UsdToAfn { get; set; } = 71.50;
@@ -319,5 +368,8 @@ public sealed class ErpLocalSnapshot
     public List<OperatorAccount> Operators { get; set; } = new();
     public List<GlAccount> ChartOfAccounts { get; set; } = new();
     public List<JournalEntry> JournalEntries { get; set; } = new();
+    public List<QcLabTest> QcLabTests { get; set; } = new();
+    public List<ExportShipment> ExportShipments { get; set; } = new();
+    public List<ConsumableItem> ConsumableItems { get; set; } = new();
     public List<AuditLogEntry> AuditLogs { get; set; } = new();
 }

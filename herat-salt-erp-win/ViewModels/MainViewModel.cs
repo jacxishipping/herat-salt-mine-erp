@@ -69,6 +69,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<GlAccount> ChartOfAccounts { get; }
     public ObservableCollection<JournalEntry> JournalEntries { get; }
     public ObservableCollection<JournalEntry> FilteredJournals { get; } = new();
+    public ObservableCollection<QcLabTest> QcLabTests { get; }
+    public ObservableCollection<ExportShipment> ExportShipments { get; }
+    public ObservableCollection<ConsumableItem> ConsumableItems { get; }
     public ObservableCollection<AuditLogEntry> AuditLogs { get; }
 
     // Reference Lists
@@ -200,11 +203,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         "Weighbridge" => Strings["NavWeighbridge"],
         "Extraction" => Strings["NavExtraction"],
         "Processing" => Strings["NavProcessing"],
+        "QcLab" => Strings["NavQcLab"],
+        "Stores" => Strings["NavStores"],
         "Sales" => Strings["NavSales"],
         "Customers" => Strings["NavCustomers"],
+        "Exports" => Strings["NavExports"],
         "Finance" => Strings["NavFinance"],
         "Accounting" => Strings["NavAccounting"],
         "Suppliers" => Strings["NavSuppliers"],
+        "Reports" => Strings["NavReports"],
         "HrHse" => Strings["NavHrHse"],
         "Audit" => Strings["NavAudit"],
         "Settings" => Strings["NavSettings"],
@@ -455,6 +462,50 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    // QC Lab & CoA Form Fields
+    public string QcBatchCode { get; set; } = "PRC-2026-0414";
+    public string QcSaltGrade { get; set; } = "REFINED_IODIZED_25KG";
+    public double QcNaClPct { get; set; } = 98.7;
+    public double QcMoisturePct { get; set; } = 1.3;
+    public double QcIodinePpm { get; set; } = 41.0;
+    public double QcInsolublePct { get; set; } = 0.20;
+
+    // Export Customs & Logistics Form Fields
+    public IReadOnlyList<string> BorderPosts { get; } = new[] { "ISLAM_QALA_EXPORT", "TORGHUNDI_EXPORT" };
+    public string ExpCustomsDecl { get; set; } = "ISQ-ASY-2026-8890";
+    public string ExpBorderPost { get; set; } = "ISLAM_QALA_EXPORT";
+    public string ExpBuyer { get; set; } = "Khorasan Food Industries (Mashhad)";
+    public string ExpTruckPlate { get; set; } = "HRT-55412";
+    public double ExpTonnageMt { get; set; } = 26.0;
+    public double ExpFreightAfn { get; set; } = 21000;
+
+    // Consumables & Spare Parts Store Form Fields
+    public string NewStoreItemName { get; set; } = "";
+    public string NewStoreCategory { get; set; } = "SPARE_PARTS";
+    public string NewStoreUnit { get; set; } = "Units";
+    public double NewStoreQty { get; set; } = 10;
+    public double NewStoreReorder { get; set; } = 5;
+    public double NewStoreUnitCost { get; set; } = 4500;
+    public string LowStockAlertText => $"{ConsumableItems.Count(c => c.StockQty <= c.ReorderLevel)} item(s) below reorder threshold";
+
+    // Reports & Aging Analytics
+    public string TotalArOutstandingText => FormatMoney(Customers.Sum(c => c.OutstandingAfn));
+    public string TotalApUnpaidText => FormatMoney(SupplierBills.Where(b => b.Status != "PAID").Sum(b => b.AmountAfn));
+    public string TotalExportTonnageText => $"{ExportShipments.Sum(s => s.TonnageMt):F1} MT ({ExportShipments.Count(s => s.Status is "BORDER_CLEARED" or "DELIVERED")} Cleared)";
+    public List<GradeProfitRow> GradeProfitability =>
+        WeighbridgeTickets.Where(t => t.Status == "ACTIVE")
+            .GroupBy(t => t.SaltGrade)
+            .Select(g =>
+            {
+                var mt = Math.Round(g.Sum(t => t.NetWeightKg) / 1000.0, 2);
+                var rev = Math.Round(g.Sum(t => (t.NetWeightKg / 1000.0) * t.UnitPriceAfnPerMt), 0);
+                var q = PricingEngineService.CalculateQuote("", g.Key, "HERAT_LOCAL", Math.Max(1, mt), 0, UsdToAfn, Array.Empty<TonnageContract>());
+                var estCost = Math.Round(mt * q.LandedCostPerMtAfn, 0);
+                return new GradeProfitRow { SaltGrade = g.Key, DispatchedMt = mt, RevenueAfn = rev, EstCostAfn = estCost };
+            })
+            .OrderByDescending(r => r.RevenueAfn)
+            .ToList();
+
     // Commands
     public ICommand SelectTabCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -491,6 +542,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand PrintPayslipCommand { get; }
     public ICommand LogHseIncidentCommand { get; }
     public ICommand IssuePpeKitCommand { get; }
+    public ICommand LogQcTestCommand { get; }
+    public ICommand PrintCoaCommand { get; }
+    public ICommand CreateExportShipmentCommand { get; }
+    public ICommand AdvanceShipmentStatusCommand { get; }
+    public ICommand AddConsumableCommand { get; }
+    public ICommand RestockConsumableCommand { get; }
+    public ICommand IssueConsumableCommand { get; }
+    public ICommand PrintExecutiveReportCommand { get; }
     public ICommand SaveSettingsCommand { get; }
     public ICommand TestKantaPortCommand { get; }
     public ICommand BackupDatabaseCommand { get; }
@@ -534,6 +593,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
         Operators = new(_snapshot.Operators);
         ChartOfAccounts = new(_snapshot.ChartOfAccounts);
         JournalEntries = new(_snapshot.JournalEntries);
+        QcLabTests = new(_snapshot.QcLabTests);
+        ExportShipments = new(_snapshot.ExportShipments);
+        ConsumableItems = new(_snapshot.ConsumableItems);
         AuditLogs = new(_snapshot.AuditLogs);
         ApplyTicketFilter();
         ApplyJournalFilter();
@@ -573,6 +635,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         PrintPayslipCommand = new RelayCommand(p => PrintWorkerPayslip(p as EmployeePayroll));
         LogHseIncidentCommand = new RelayCommand(_ => LogHseIncident());
         IssuePpeKitCommand = new RelayCommand(_ => IssuePpeKit());
+        LogQcTestCommand = new RelayCommand(_ => LogQcTest());
+        PrintCoaCommand = new RelayCommand(p => PrintCoa(p as QcLabTest));
+        CreateExportShipmentCommand = new RelayCommand(_ => CreateExportShipment());
+        AdvanceShipmentStatusCommand = new RelayCommand(p => AdvanceShipmentStatus(p as ExportShipment));
+        AddConsumableCommand = new RelayCommand(_ => AddConsumable());
+        RestockConsumableCommand = new RelayCommand(p => AdjustConsumable(p as ConsumableItem, true));
+        IssueConsumableCommand = new RelayCommand(p => AdjustConsumable(p as ConsumableItem, false));
+        PrintExecutiveReportCommand = new RelayCommand(_ => PrintExecutiveReport());
         SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
         TestKantaPortCommand = new RelayCommand(_ => TestKantaPort());
         BackupDatabaseCommand = new RelayCommand(_ => BackupDatabase());
@@ -1230,6 +1300,185 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ShowToast($"Created contract {ctr.ContractCode}");
     }
 
+    private void LogQcTest()
+    {
+        if (string.IsNullOrWhiteSpace(QcBatchCode)) return;
+        bool isIodized = QcSaltGrade.Contains("IODIZED", StringComparison.OrdinalIgnoreCase);
+        string status = isIodized
+            ? (QcNaClPct >= 97.0 && QcMoisturePct <= 3.0 && QcIodinePpm >= 30.0 && QcIodinePpm <= 60.0 ? "PASS_FOOD_GRADE" : "FAIL_REPROCESS")
+            : (QcNaClPct >= 92.0 ? "PASS_INDUSTRIAL" : "FAIL_REPROCESS");
+
+        var test = new QcLabTest
+        {
+            TestCode = $"COA-2026-{219 + QcLabTests.Count:D4}",
+            BatchCode = QcBatchCode.Trim(),
+            SaltGrade = QcSaltGrade,
+            NaClPurityPct = QcNaClPct,
+            MoisturePct = QcMoisturePct,
+            IodinePpm = QcIodinePpm,
+            InsolublePct = QcInsolublePct,
+            Status = status,
+            TestedBy = ActiveRole.ToString(),
+            TestedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
+        };
+        QcLabTests.Insert(0, test);
+        _snapshot.QcLabTests.Insert(0, test);
+        AddAudit("qc_lab_tests", test.TestCode, "INSERT", $"QC {test.BatchCode}: NaCl {test.NaClPurityPct}%, I2 {test.IodinePpm} ppm -> {test.Status}");
+        PersistAndRefresh();
+        ShowToast($"Logged QC Lab {test.TestCode} ({test.Status})");
+    }
+
+    private void PrintCoa(QcLabTest? test)
+    {
+        if (test is null) return;
+        var dlg = new PrintDialog();
+        if (dlg.ShowDialog() != true) return;
+        var doc = new FlowDocument
+        {
+            PageWidth = 520, PagePadding = new Thickness(24), FlowDirection = WindowFlowDirection,
+            FontFamily = new FontFamily("Segoe UI"), FontSize = 11.5
+        };
+        doc.Blocks.Add(new Paragraph(new Bold(new Run($"{SettingsCompanyName}\nCERTIFICATE OF ANALYSIS (CoA)"))) { TextAlignment = TextAlignment.Center });
+        doc.Blocks.Add(new Paragraph(new Run(
+            $"Certificate #: {test.TestCode}\n" +
+            $"MoMP License: {SettingsMompLicense}   |   TIN: {SettingsTaxIdTin}\n" +
+            $"Batch Code: {test.BatchCode}   |   Salt Grade: {test.SaltGrade}\n" +
+            $"Tested At: {test.TestedAt}   |   Chemist: {test.TestedBy}\n" +
+            $"--------------------------------------------------------------\n" +
+            $"NaCl Purity:          {test.NaClPurityPct:F2} %   (Food-Grade Spec >= 97.0%)\n" +
+            $"Moisture Content:     {test.MoisturePct:F2} %   (Spec <= 3.0%)\n" +
+            $"Iodine (KIO3):        {test.IodinePpm:F1} ppm (WHO/MoPH Spec 30-60 ppm)\n" +
+            $"Insoluble Matter:     {test.InsolublePct:F2} %\n" +
+            $"--------------------------------------------------------------\n" +
+            $"COMPLIANCE VERDICT:   {test.Status}")));
+        dlg.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, test.TestCode);
+        ShowToast($"Printed Certificate of Analysis {test.TestCode}");
+    }
+
+    private void CreateExportShipment()
+    {
+        if (ExpTonnageMt <= 0 || string.IsNullOrWhiteSpace(ExpTruckPlate)) return;
+        var ship = new ExportShipment
+        {
+            ShipmentCode = $"EXP-2026-{117 + ExportShipments.Count:D4}",
+            CustomsDeclNo = ExpCustomsDecl.Trim(),
+            BorderPost = ExpBorderPost,
+            BuyerName = ExpBuyer.Trim(),
+            TruckPlate = ExpTruckPlate.Trim(),
+            TonnageMt = ExpTonnageMt,
+            FreightCostAfn = ExpFreightAfn,
+            Status = "AT_MINE",
+            UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
+        };
+        ExportShipments.Insert(0, ship);
+        _snapshot.ExportShipments.Insert(0, ship);
+        AddAudit("export_shipments", ship.ShipmentCode, "INSERT", $"Created export {ship.TonnageMt} MT via {ship.BorderPost} ({ship.CustomsDeclNo})");
+        PersistAndRefresh();
+        ShowToast($"Created export shipment {ship.ShipmentCode}");
+    }
+
+    private void AdvanceShipmentStatus(ExportShipment? ship)
+    {
+        if (ship is null || ship.Status == "DELIVERED") return;
+        ship.Status = ship.Status switch
+        {
+            "AT_MINE" => "IN_TRANSIT",
+            "IN_TRANSIT" => "BORDER_CLEARED",
+            "BORDER_CLEARED" => "DELIVERED",
+            _ => "DELIVERED"
+        };
+        ship.UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+        if (ship.Status == "BORDER_CLEARED" && ship.FreightCostAfn > 0)
+        {
+            PostDoubleEntry("5200", "1020", ship.FreightCostAfn, $"Export customs & freight cleared — {ship.ShipmentCode} ({ship.CustomsDeclNo})");
+        }
+        AddAudit("export_shipments", ship.ShipmentCode, "STATUS_UPDATE", $"Advanced {ship.ShipmentCode} to {ship.Status}");
+        System.Windows.Data.CollectionViewSource.GetDefaultView(ExportShipments)?.Refresh();
+        PersistAndRefresh();
+        ShowToast($"{ship.ShipmentCode} -> {ship.Status}");
+    }
+
+    private void AddConsumable()
+    {
+        if (string.IsNullOrWhiteSpace(NewStoreItemName)) return;
+        var item = new ConsumableItem
+        {
+            SkuCode = $"STR-NEW-{100 + ConsumableItems.Count:D3}",
+            ItemName = NewStoreItemName.Trim(),
+            Category = NewStoreCategory,
+            Unit = string.IsNullOrWhiteSpace(NewStoreUnit) ? "Units" : NewStoreUnit.Trim(),
+            StockQty = Math.Max(0, NewStoreQty),
+            ReorderLevel = Math.Max(0, NewStoreReorder),
+            UnitCostAfn = Math.Max(0, NewStoreUnitCost)
+        };
+        ConsumableItems.Insert(0, item);
+        _snapshot.ConsumableItems.Insert(0, item);
+        NewStoreItemName = "";
+        OnPropertyChanged(nameof(NewStoreItemName));
+        AddAudit("consumables_store", item.SkuCode, "INSERT", $"Added store SKU {item.ItemName} ({item.StockQty} {item.Unit})");
+        PersistAndRefresh();
+        ShowToast($"Added store item {item.ItemName}");
+    }
+
+    private void AdjustConsumable(ConsumableItem? item, bool isRestock)
+    {
+        if (item is null) return;
+        double delta = item.Unit.Equals("Liters", StringComparison.OrdinalIgnoreCase) ? 500
+                     : item.Unit.Equals("Bags", StringComparison.OrdinalIgnoreCase) ? 1000
+                     : 10;
+        if (isRestock)
+        {
+            item.StockQty = Math.Round(item.StockQty + delta, 1);
+            var cost = Math.Round(delta * item.UnitCostAfn, 0);
+            if (cost > 0)
+            {
+                var expCode = item.Category is "PACKAGING_BAGS" or "POTASSIUM_IODATE" ? "5100" : "5000";
+                PostDoubleEntry(expCode, "1000", cost, $"Store restock +{delta} {item.Unit} {item.ItemName}");
+            }
+            AddAudit("consumables_store", item.SkuCode, "RESTOCK", $"+{delta} {item.Unit} ({item.ItemName})");
+            ShowToast($"Restocked +{delta} {item.Unit} {item.ItemName}");
+        }
+        else
+        {
+            item.StockQty = Math.Max(0, Math.Round(item.StockQty - delta, 1));
+            AddAudit("consumables_store", item.SkuCode, "ISSUE", $"-{delta} {item.Unit} issued to mine/plant ({item.ItemName})");
+            ShowToast($"Issued -{delta} {item.Unit} {item.ItemName}");
+        }
+        System.Windows.Data.CollectionViewSource.GetDefaultView(ConsumableItems)?.Refresh();
+        PersistAndRefresh();
+    }
+
+    private void PrintExecutiveReport()
+    {
+        if (!CanViewFinancials) { ShowToast("Owner or Finance Officer role required."); return; }
+        var dlg = new PrintDialog();
+        if (dlg.ShowDialog() != true) return;
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Company: {SettingsCompanyName}  |  MoMP: {SettingsMompLicense}");
+        sb.AppendLine($"Date: {DateTime.Now:yyyy-MM-dd HH:mm}  |  FX: 1 USD = {UsdToAfn:F2} AFN");
+        sb.AppendLine("==============================================================");
+        sb.AppendLine($"Extracted Today:    {KpiExtractedText}");
+        sb.AppendLine($"Dispatched (Kanta): {KpiDispatchedText}");
+        sb.AppendLine($"Exports Tracked:    {TotalExportTonnageText}");
+        sb.AppendLine($"Total AR Due:       {TotalArOutstandingText}");
+        sb.AppendLine($"Total Unpaid AP:    {TotalApUnpaidText}");
+        sb.AppendLine($"GL Revenue (P&L):   {GlRevenueText}");
+        sb.AppendLine($"GL Net Profit:      {GlNetProfitText}");
+        sb.AppendLine("==============================================================");
+        sb.AppendLine("PROFITABILITY BY SALT GRADE:");
+        foreach (var g in GradeProfitability)
+            sb.AppendLine($"  {g.SaltGrade,-24} {g.DispatchedMt,6:F1} MT | Rev {g.RevenueAfn,10:N0} | Profit {g.EstProfitAfn,10:N0} ({g.MarginPct:F1}%)");
+        var doc = new FlowDocument
+        {
+            PageWidth = 560, PagePadding = new Thickness(24), FlowDirection = WindowFlowDirection,
+            FontFamily = new FontFamily("Consolas, Segoe UI"), FontSize = 10.5
+        };
+        doc.Blocks.Add(new Paragraph(new Bold(new Run("HERAT SALT MINE — EXECUTIVE MANAGEMENT & AGING REPORT"))) { TextAlignment = TextAlignment.Center });
+        doc.Blocks.Add(new Paragraph(new Run(sb.ToString())));
+        dlg.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, $"ExecutiveReport-{DateTime.Now:yyyy-MM-dd}");
+        ShowToast("Printed Executive Management Report");
+    }
+
     private void RefreshKpis()
     {
         OnPropertyChanged(nameof(KpiExtractedText));
@@ -1251,6 +1500,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(GlNetProfitText));
         OnPropertyChanged(nameof(BalanceSheetEquationText));
         OnPropertyChanged(nameof(TrialBalanceCheckText));
+        OnPropertyChanged(nameof(LowStockAlertText));
+        OnPropertyChanged(nameof(TotalArOutstandingText));
+        OnPropertyChanged(nameof(TotalApUnpaidText));
+        OnPropertyChanged(nameof(TotalExportTonnageText));
+        OnPropertyChanged(nameof(GradeProfitability));
         OnPropertyChanged(nameof(PendingSyncCount));
         OnPropertyChanged(nameof(PendingSyncLabel));
         OnPropertyChanged(nameof(HasPendingSync));
