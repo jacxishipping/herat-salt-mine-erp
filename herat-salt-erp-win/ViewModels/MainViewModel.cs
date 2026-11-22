@@ -382,10 +382,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public double NewBillAmountAfn { get; set; } = 125000;
     public string NewBillDueDate { get; set; } = DateTime.Now.AddDays(10).ToString("yyyy-MM-dd");
 
-    // Settings & Hardware COM Port Fields
+    // Settings, Company Profile, Royalty Parameters & Hardware COM Port Fields
+    public string SettingsCompanyName { get; set; } = "Herat Salt Mine Co. (Ghoryan & Kuhsan)";
+    public string SettingsMompLicense { get; set; } = "MOMP-HRT-2026-0419";
+    public string SettingsTaxIdTin { get; set; } = "AFG-TIN-9048211";
+    public string SettingsScaleDeviceId { get; set; } = "KANTA-GHR-01";
+    public double SettingsMompRoyaltyRate { get; set; } = 350.0;
+    public double SettingsDefaultMarginPct { get; set; } = 25.0;
     public string SettingsComPort { get; set; } = "COM3";
     public int SettingsBaudRate { get; set; } = 9600;
     public string SettingsSyncUrl { get; set; } = "http://localhost:3000";
+    public string DatabasePathText => _dataService.DatabasePath;
+    private string _kantaDiagnosticStatus = "Ready — click Test RS-232 Scale to verify port";
+    public string KantaDiagnosticStatus { get => _kantaDiagnosticStatus; set { _kantaDiagnosticStatus = value; OnPropertyChanged(); } }
 
     // Operator Admin Form Fields
     public string NewOpEmail { get; set; } = "";
@@ -483,6 +492,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand LogHseIncidentCommand { get; }
     public ICommand IssuePpeKitCommand { get; }
     public ICommand SaveSettingsCommand { get; }
+    public ICommand TestKantaPortCommand { get; }
+    public ICommand BackupDatabaseCommand { get; }
     public ICommand AddOperatorCommand { get; }
     public ICommand ToggleOperatorCommand { get; }
     public ICommand SyncQueueCommand { get; }
@@ -493,6 +504,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
         AvailableComPorts = _kantaService.GetAvailablePorts();
         _snapshot = _dataService.LoadOrSeed();
         _usdToAfn = _snapshot.UsdToAfn;
+        SettingsCompanyName = _snapshot.Settings.CompanyName;
+        SettingsMompLicense = _snapshot.Settings.MompLicenseNo;
+        SettingsTaxIdTin = _snapshot.Settings.TaxIdTin;
+        SettingsScaleDeviceId = _snapshot.Settings.ScaleDeviceId;
+        SettingsMompRoyaltyRate = _snapshot.Settings.MompRoyaltyRateAfnPerMt;
+        SettingsDefaultMarginPct = _snapshot.Settings.DefaultMarginPct;
         SettingsComPort = _snapshot.Settings.ComPort;
         SettingsBaudRate = _snapshot.Settings.BaudRate;
         SettingsSyncUrl = _snapshot.Settings.SyncApiBaseUrl;
@@ -557,6 +574,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         LogHseIncidentCommand = new RelayCommand(_ => LogHseIncident());
         IssuePpeKitCommand = new RelayCommand(_ => IssuePpeKit());
         SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
+        TestKantaPortCommand = new RelayCommand(_ => TestKantaPort());
+        BackupDatabaseCommand = new RelayCommand(_ => BackupDatabase());
         AddOperatorCommand = new RelayCommand(_ => AddOperator());
         ToggleOperatorCommand = new RelayCommand(p => ToggleOperator(p as OperatorAccount));
         SyncQueueCommand = new RelayCommand(async _ => await SyncOfflineQueueAsync());
@@ -964,11 +983,34 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void SaveSettings()
     {
+        _snapshot.Settings.CompanyName = SettingsCompanyName.Trim();
+        _snapshot.Settings.MompLicenseNo = SettingsMompLicense.Trim();
+        _snapshot.Settings.TaxIdTin = SettingsTaxIdTin.Trim();
+        _snapshot.Settings.ScaleDeviceId = SettingsScaleDeviceId.Trim();
+        _snapshot.Settings.MompRoyaltyRateAfnPerMt = SettingsMompRoyaltyRate > 0 ? SettingsMompRoyaltyRate : 350.0;
+        _snapshot.Settings.DefaultMarginPct = SettingsDefaultMarginPct >= 0 ? SettingsDefaultMarginPct : 25.0;
         _snapshot.Settings.ComPort = SettingsComPort;
         _snapshot.Settings.BaudRate = SettingsBaudRate;
         _snapshot.Settings.SyncApiBaseUrl = SettingsSyncUrl.Trim();
+        SaleTargetMarginPct = _snapshot.Settings.DefaultMarginPct;
+        AddAudit("settings", "APP_CONFIG", "UPDATE", $"Updated mine profile, royalty ({_snapshot.Settings.MompRoyaltyRateAfnPerMt} AFN/MT) & {SettingsComPort}@{SettingsBaudRate}");
         PersistAndRefresh();
-        ShowToast($"Saved Scale ({SettingsComPort} @ {SettingsBaudRate}) & Sync URL");
+        ShowToast($"Saved all settings ({SettingsComPort} @ {SettingsBaudRate})");
+    }
+
+    private void TestKantaPort()
+    {
+        var (weightKg, mode, scaleId) = _kantaService.CaptureWeight(SettingsComPort, SettingsBaudRate);
+        KantaDiagnosticStatus = $"[{DateTime.Now:HH:mm:ss}] OK — {scaleId} ({SettingsComPort} @ {SettingsBaudRate} baud) read {weightKg:N0} kg via {mode}";
+        ShowToast($"Kanta test passed: {weightKg:N0} kg ({mode})");
+    }
+
+    private void BackupDatabase()
+    {
+        var path = _dataService.BackupDatabaseToDesktop();
+        AddAudit("sqlite_backup", System.IO.Path.GetFileName(path), "BACKUP", $"Created ACID SQLite backup on Desktop");
+        PersistAndRefresh();
+        ShowToast($"SQLite backup saved to Desktop: {System.IO.Path.GetFileName(path)}");
     }
 
     private void AddOperator()

@@ -258,6 +258,12 @@ public sealed class OperatorAccount
 
 public sealed class AppSettings
 {
+    public string CompanyName { get; set; } = "Herat Salt Mine Co. (Ghoryan & Kuhsan)";
+    public string MompLicenseNo { get; set; } = "MOMP-HRT-2026-0419";
+    public string TaxIdTin { get; set; } = "AFG-TIN-9048211";
+    public string ScaleDeviceId { get; set; } = "KANTA-GHR-01";
+    public double MompRoyaltyRateAfnPerMt { get; set; } = 350.0;
+    public double DefaultMarginPct { get; set; } = 25.0;
     public string ComPort { get; set; } = "COM3";
     public int BaudRate { get; set; } = 9600;
     public string SyncApiBaseUrl { get; set; } = "http://localhost:3000";

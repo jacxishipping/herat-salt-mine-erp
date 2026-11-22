@@ -1045,16 +1045,69 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- 10. SETTINGS, SCALE COM PORT & OPERATOR ADMIN -->
+                    <!-- 10. SETTINGS, COMPANY PROFILE, SCALE HARDWARE, SQLITE BACKUP & OPERATOR ADMIN -->
                     <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Settings}">
-                        <TextBlock Text="{Binding Strings[NavSettings]}" Style="{StaticResource PageTitleStyle}" />
-                        <TextBlock Text="Configure physical RS-232 Weighbridge (Kanta) COM port, baud rate, cloud sync endpoint &amp; RBAC operators."
-                                   Style="{StaticResource SubtitleStyle}" Margin="0,4,0,14" />
+                        <Grid Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Strings[NavSettings]}" Style="{StaticResource PageTitleStyle}" />
+                                <TextBlock Text="Company &amp; MoMP license profile, royalty/margin defaults, RS-232 Kanta scale diagnostics, SQLite backups &amp; RBAC operators."
+                                           Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <Button Content="Save All Settings" Command="{Binding SaveSettingsCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
 
+                        <!-- 10A. COMPANY & MOMP LICENSE PROFILE -->
                         <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
                             <StackPanel>
-                                <TextBlock Text="WEIGHBRIDGE HARDWARE &amp; CLOUD SYNC" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <TextBlock Text="COMPANY &amp; MOMP MINING LICENSE PROFILE" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
                                 <UniformGrid Columns="4">
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Company Legal Name" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SettingsCompanyName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="MoMP License #" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SettingsMompLicense, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Afghanistan Tax ID (TIN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SettingsTaxIdTin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Weighbridge Device ID" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SettingsScaleDeviceId, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 10B. ROYALTY, PRICING & FX PARAMETERS -->
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="ROYALTY, PRICING ENGINE &amp; FX PARAMETERS" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="3">
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="MoMP Royalty Rate (AFN / MT)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SettingsMompRoyaltyRate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Default Sales Target Margin (%)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SettingsDefaultMarginPct, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Locked Exchange Rate (1 USD to AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding UsdToAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 10C. WEIGHBRIDGE HARDWARE & CLOUD SYNC -->
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="WEIGHBRIDGE (KANTA) RS-232 HARDWARE &amp; CLOUD SYNC" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="4" Margin="0,0,0,10">
                                     <StackPanel Margin="0,0,8,0">
                                         <TextBlock Text="Kanta COM Port" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
                                         <ComboBox ItemsSource="{Binding AvailableComPorts}" SelectedItem="{Binding SettingsComPort}" Style="{StaticResource SaaSComboBoxStyle}" />
@@ -1067,19 +1120,46 @@
                                         <TextBlock Text="Central ERP Sync URL" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
                                         <TextBox Text="{Binding SettingsSyncUrl, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
                                     </StackPanel>
-                                    <Button Content="Save Hardware Settings" Command="{Binding SaveSettingsCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
+                                    <Button Content="Test RS-232 Scale" Command="{Binding TestKantaPortCommand}" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" />
                                 </UniformGrid>
+                                <Border Style="{StaticResource TerminalBoxStyle}" Padding="10,8">
+                                    <TextBlock Text="{Binding KantaDiagnosticStatus}" Style="{StaticResource MonoTextStyle}" FontSize="11.5" Foreground="#10B981" />
+                                </Border>
                             </StackPanel>
                         </Border>
 
+                        <!-- 10D. LOCAL SQLITE DATABASE BACKUP & EXPORTS -->
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="LOCAL SQLITE DATABASE (ACID WAL) &amp; DISASTER BACKUP" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,6" />
+                                    <TextBlock Text="{Binding DatabasePathText}" Style="{StaticResource MonoTextStyle}" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Button Content="Backup SQLite to Desktop" Command="{Binding BackupDatabaseCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                                    <Button Content="Export Audit CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 10E. MINE OPERATORS & RBAC ACCOUNTS -->
                         <Border Style="{StaticResource SurfaceCardStyle}">
                             <StackPanel>
                                 <TextBlock Text="MINE OPERATORS &amp; RBAC ACCOUNTS (OWNER ADMIN)" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
                                 <UniformGrid Columns="4" Margin="0,0,0,12">
-                                    <TextBox Text="{Binding NewOpName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
-                                    <TextBox Text="{Binding NewOpEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
-                                    <ComboBox ItemsSource="{Binding AllRoles}" SelectedItem="{Binding NewOpRole}" Style="{StaticResource SaaSComboBoxStyle}" Margin="0,0,6,0" />
-                                    <Button Content="+ Add Operator" Command="{Binding AddOperatorCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Operator Full Name" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewOpName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Operator Email" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewOpEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Assigned RBAC Role" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding AllRoles}" SelectedItem="{Binding NewOpRole}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                    </StackPanel>
+                                    <Button Content="+ Add Operator" Command="{Binding AddOperatorCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
                                 </UniformGrid>
                                 <DataGrid ItemsSource="{Binding Operators}" Style="{StaticResource SaaSDataGridStyle}">
                                     <DataGrid.Columns>

@@ -36,6 +36,19 @@ public sealed class ErpDataService
         EnsureSqliteSchema();
     }
 
+    public string DatabasePath => _dbPath;
+
+    public string BackupDatabaseToDesktop()
+    {
+        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        var backupPath = Path.Combine(desktop, $"HeratSaltErp-Backup-{DateTime.Now:yyyy-MM-dd-HHmm}.db");
+        using var source = OpenConnection();
+        using var destination = new SqliteConnection($"Data Source={backupPath}");
+        destination.Open();
+        source.BackupDatabase(destination);
+        return backupPath;
+    }
+
     private SqliteConnection OpenConnection()
     {
         var conn = new SqliteConnection($"Data Source={_dbPath}");
