@@ -54,6 +54,7 @@ public sealed class ExtractionLog
     public string EquipmentCode { get; set; } = "EXC-CAT336-02";
     public double FuelUsedL { get; set; }
     public double EngineHoursDelta { get; set; }
+    public double MoisturePct { get; set; } = 2.4;
     public string SyncState { get; set; } = "SYNCED";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
@@ -64,7 +65,7 @@ public sealed class WeighbridgeTicket
     public string ClientSyncId { get; set; } = Guid.NewGuid().ToString();
     public string TicketNumber { get; set; } = "";
     public string Direction { get; set; } = "OUTBOUND_DISPATCH";
-    public string Status { get; set; } = "ACTIVE"; // ACTIVE, VOID_PENDING, VOIDED
+    public string Status { get; set; } = "ACTIVE";
     public string TruckPlate { get; set; } = "";
     public string DriverName { get; set; } = "";
     public string DriverTazkira { get; set; } = "";
@@ -97,6 +98,18 @@ public sealed class WarehouseStock
     public double UtilizationPct => CapacityMt > 0 ? Math.Min(100, Math.Round((QuantityMt / CapacityMt) * 100, 1)) : 0;
 }
 
+public sealed class InventoryTransfer
+{
+    public string TransferCode { get; set; } = "";
+    public string TransferType { get; set; } = "TRANSFER"; // TRANSFER, SHRINKAGE_ADJUSTMENT
+    public string FromWarehouse { get; set; } = "WH-GHR-SITE";
+    public string ToWarehouse { get; set; } = "WH-HRT-CITY";
+    public string SaltGrade { get; set; } = "REFINED_IODIZED_25KG";
+    public double QuantityMt { get; set; }
+    public string Reason { get; set; } = "";
+    public string RecordedAt { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+}
+
 public sealed class ProcessingBatch
 {
     public string BatchCode { get; set; } = "";
@@ -107,6 +120,39 @@ public sealed class ProcessingBatch
     public double ShrinkageMt => Math.Round(IntakeMt - OutputMt, 2);
     public double IodinePpm { get; set; }
     public string Compliance => IodinePpm >= 30 && IodinePpm <= 60 ? "Food-Grade OK" : "Industrial";
+}
+
+public sealed class CustomerAccount
+{
+    public string Code { get; set; } = "";
+    public string CompanyName { get; set; } = "";
+    public string CustomerType { get; set; } = "WHOLESALER";
+    public double CreditLimitAfn { get; set; }
+    public double OutstandingAfn { get; set; }
+    public double CreditPct => CreditLimitAfn > 0 ? Math.Min(100, Math.Round((OutstandingAfn / CreditLimitAfn) * 100, 1)) : 0;
+}
+
+public sealed class TonnageContract
+{
+    public string ContractCode { get; set; } = "";
+    public string CustomerName { get; set; } = "";
+    public string SaltGrade { get; set; } = "";
+    public double ContractedMt { get; set; }
+    public double DeliveredMt { get; set; }
+    public double TierPriceAfnPerMt { get; set; }
+    public double ProgressPct => ContractedMt > 0 ? Math.Min(100, Math.Round((DeliveredMt / ContractedMt) * 100, 1)) : 0;
+}
+
+public sealed class InvoiceRecord
+{
+    public string InvoiceNumber { get; set; } = "";
+    public string TicketNumber { get; set; } = "";
+    public string CustomerName { get; set; } = "";
+    public double QuantityMt { get; set; }
+    public double TotalAfn { get; set; }
+    public double PaidAfn { get; set; }
+    public double BalanceAfn => Math.Max(0, TotalAfn - PaidAfn);
+    public string Status { get; set; } = "PARTIAL";
 }
 
 public sealed class FinancialEntry
@@ -131,7 +177,7 @@ public sealed class MompRoyalty
     public double ExportedMt { get; set; }
     public string CustomsBorderRef { get; set; } = "";
     public double TotalRoyaltyAfn { get; set; }
-    public string Status { get; set; } = "PENDING"; // PENDING, FILED, PAID
+    public string Status { get; set; } = "PENDING";
 }
 
 public sealed class EmployeePayroll
@@ -145,6 +191,27 @@ public sealed class EmployeePayroll
     public double TonBonusAfn { get; set; }
     public double AdvancesDeductionAfn { get; set; }
     public double NetPayableAfn => (DaysWorked * DailyWageAfn) + TonBonusAfn - AdvancesDeductionAfn;
+}
+
+public sealed class AttendanceRecord
+{
+    public string ClientSyncId { get; set; } = Guid.NewGuid().ToString();
+    public string EmployeeCode { get; set; } = "";
+    public string FullName { get; set; } = "";
+    public string ShiftCode { get; set; } = "SHIFT_A_DAY";
+    public string Method { get; set; } = "BIOMETRIC_FINGERPRINT";
+    public string CheckInTime { get; set; } = DateTime.Now.ToString("HH:mm:ss");
+    public string Status { get; set; } = "PRESENT";
+    public string SyncState { get; set; } = "SYNCED";
+}
+
+public sealed class PpeIssuance
+{
+    public string EmployeeCode { get; set; } = "";
+    public string FullName { get; set; } = "";
+    public string Items { get; set; } = "";
+    public string IssuedDate { get; set; } = DateTime.Now.ToString("yyyy-MM-dd");
+    public string Inspector { get; set; } = "";
 }
 
 public sealed class HseIncident
@@ -178,10 +245,16 @@ public sealed class ErpLocalSnapshot
     public List<ExtractionLog> ExtractionLogs { get; set; } = new();
     public List<WeighbridgeTicket> WeighbridgeTickets { get; set; } = new();
     public List<WarehouseStock> WarehouseStocks { get; set; } = new();
+    public List<InventoryTransfer> InventoryTransfers { get; set; } = new();
     public List<ProcessingBatch> ProcessingBatches { get; set; } = new();
+    public List<CustomerAccount> Customers { get; set; } = new();
+    public List<TonnageContract> Contracts { get; set; } = new();
+    public List<InvoiceRecord> Invoices { get; set; } = new();
     public List<FinancialEntry> FinancialLedger { get; set; } = new();
     public List<MompRoyalty> MompRoyalties { get; set; } = new();
     public List<EmployeePayroll> PayrollRecords { get; set; } = new();
+    public List<AttendanceRecord> AttendanceRecords { get; set; } = new();
+    public List<PpeIssuance> PpeIssuances { get; set; } = new();
     public List<HseIncident> HseIncidents { get; set; } = new();
     public List<AuditLogEntry> AuditLogs { get; set; } = new();
 }

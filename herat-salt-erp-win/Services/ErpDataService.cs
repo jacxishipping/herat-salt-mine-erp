@@ -212,6 +212,37 @@ public sealed class ErpDataService
         {
             new() { Timestamp = "08:54:00", TableName = "weighbridge_tickets", RecordRef = "KNT-2026-001844", Action = "VOID_REQUEST", Summary = "Clerk requested void: Truck axle hydraulic fault.", Actor = "Fardin Ahmadi" },
             new() { Timestamp = "07:45:12", TableName = "weighbridge_tickets", RecordRef = "KNT-2026-001842", Action = "INSERT", Summary = "Issued 25.00 MT Refined Iodized (Islam Qala Export)", Actor = "Fardin Ahmadi" }
+        },
+        InventoryTransfers = new()
+        {
+            new() { TransferCode = "TRF-2026-0192", TransferType = "TRANSFER", FromWarehouse = "WH-GHR-SITE", ToWarehouse = "WH-HRT-CITY", SaltGrade = "REFINED_IODIZED_25KG", QuantityMt = 65.0, Reason = "Replenish Herat city depot" },
+            new() { TransferCode = "ADJ-2026-0044", TransferType = "SHRINKAGE_ADJUSTMENT", FromWarehouse = "WH-GHR-SITE", ToWarehouse = "-", SaltGrade = "INDUSTRIAL_RAW_ROCK", QuantityMt = 8.5, Reason = "Seasonal moisture loss audit" }
+        },
+        Customers = new()
+        {
+            new() { Code = "CUS-EXP-001", CompanyName = "Khorasan Food Industries (Mashhad)", CustomerType = "EXPORT_BUYER", CreditLimitAfn = 2500000, OutstandingAfn = 480000 },
+            new() { Code = "CUS-HRT-014", CompanyName = "Herat Central Salt Wholesalers", CustomerType = "WHOLESALER", CreditLimitAfn = 1200000, OutstandingAfn = 195000 },
+            new() { Code = "CUS-GOV-003", CompanyName = "Western Provinces Municipal Tender", CustomerType = "GOV_TENDER", CreditLimitAfn = 4000000, OutstandingAfn = 920000 }
+        },
+        Contracts = new()
+        {
+            new() { ContractCode = "CTR-EXP-2026-01", CustomerName = "Khorasan Food Industries (Mashhad)", SaltGrade = "REFINED_IODIZED_25KG", ContractedMt = 1500, DeliveredMt = 640, TierPriceAfnPerMt = 6800 },
+            new() { ContractCode = "CTR-GOV-2026-04", CustomerName = "Western Provinces Municipal Tender", SaltGrade = "DEICING_CHEMICAL", ContractedMt = 2000, DeliveredMt = 820, TierPriceAfnPerMt = 3600 }
+        },
+        Invoices = new()
+        {
+            new() { InvoiceNumber = "INV-2026-0881", TicketNumber = "KNT-2026-001842", CustomerName = "Khorasan Food Industries (Mashhad)", QuantityMt = 25.0, TotalAfn = 170000, PaidAfn = 120000, Status = "PARTIAL" },
+            new() { InvoiceNumber = "INV-2026-0882", TicketNumber = "KNT-2026-001843", CustomerName = "Herat Central Salt Wholesalers", QuantityMt = 28.0, TotalAfn = 89600, PaidAfn = 89600, Status = "PAID" }
+        },
+        AttendanceRecords = new()
+        {
+            new() { EmployeeCode = "EMP-GHR-011", FullName = "Eng. Ahmadullah Noori", ShiftCode = "SHIFT_A_DAY", Method = "BIOMETRIC_FINGERPRINT", CheckInTime = "05:55:00", Status = "PRESENT" },
+            new() { EmployeeCode = "EMP-GHR-024", FullName = "Zabihullah Karimi", ShiftCode = "SHIFT_A_DAY", Method = "TAZKIRA_RFID", CheckInTime = "06:04:00", Status = "PRESENT" }
+        },
+        PpeIssuances = new()
+        {
+            new() { EmployeeCode = "EMP-GHR-011", FullName = "Eng. Ahmadullah Noori", Items = "N95 Dust Respirator (x5), Hard Hat, Safety Boots", IssuedDate = "2026-11-15", Inspector = "Dr. Zabiullah Rahimi" },
+            new() { EmployeeCode = "EMP-KHS-008", FullName = "Haji Gulabuddin", Items = "UV Polarized Goggles, Salt-Resistant Rubber Boots", IssuedDate = "2026-11-16", Inspector = "Dr. Zabiullah Rahimi" }
         }
     };
 }
