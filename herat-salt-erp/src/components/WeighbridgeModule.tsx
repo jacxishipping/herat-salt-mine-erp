@@ -25,6 +25,7 @@ import { TranslationDict } from "@/lib/i18n";
 import { formatCurrency, formatNumber } from "@/lib/currency";
 import { ROLE_PERMISSIONS } from "@/lib/rbac";
 import { printThermalWaybillPdf } from "@/lib/export-reports";
+import { calculateSaltPriceQuote } from "@/lib/pricing-engine";
 
 interface WeighbridgeModuleProps {
   t: TranslationDict;
@@ -108,6 +109,20 @@ export function WeighbridgeModule({
   }
 
   const netKg = Math.max(0, grossWeightKg - tareWeightKg);
+  const [targetMarginPct, setTargetMarginPct] = useState<number>(25);
+
+  const liveQuote = useMemo(
+    () =>
+      calculateSaltPriceQuote({
+        customerName: counterpartyName,
+        saltGrade,
+        destination: destinationType,
+        quantityMt: netKg / 1000,
+        targetMarginPct,
+        usdToAfn,
+      }),
+    [counterpartyName, saltGrade, destinationType, netKg, targetMarginPct, usdToAfn]
+  );
 
   const filteredTickets = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -392,20 +407,72 @@ export function WeighbridgeModule({
             )}
           </div>
 
+          {/* Automatic Cost-Plus & Tiered Pricing Breakdown */}
+          <div className="terminal p-3 mono text-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <div>
+                Extraction {liveQuote.extractionAfn} + Processing/I2 {liveQuote.processingIodineAfn} + Bags {liveQuote.packagingAfn} + MoMP {liveQuote.mompRoyaltyAfn} + Freight {liveQuote.transportAfn} ={" "}
+                <span className="text-amber-400 font-semibold">
+                  Landed {liveQuote.landedCostPerMtAfn} AFN/MT
+                </span>
+              </div>
+              <div className="text-emerald-400">
+                Suggested ({liveQuote.pricingSource}): {liveQuote.finalUnitPriceAfn.toLocaleString()} AFN/MT (${liveQuote.finalUnitPriceUsd}/MT) · Est. Profit: {formatCurrency(liveQuote.estimatedProfitAfn, currency, usdToAfn)}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-[11px] text-slate-400 flex items-center gap-1">
+                Margin %
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={targetMarginPct}
+                  onChange={(e) => setTargetMarginPct(Number(e.target.value))}
+                  className="field w-16 py-1 px-2 text-xs mono"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => setUnitPriceAfnPerMt(liveQuote.finalUnitPriceAfn)}
+                className="btn py-1 px-2.5 text-xs"
+              >
+                Apply Auto-Price
+              </button>
+            </div>
+          </div>
+
           <div
-            className="flex items-center justify-end gap-2 pt-3"
+            className="flex flex-wrap items-center justify-between gap-2 pt-3"
             style={{ borderTop: "1px solid var(--border-hair)" }}
           >
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="btn btn-ghost"
-            >
-              {t.weighbridge.close}
-            </button>
-            <button type="submit" className="btn btn-primary">
-              {t.weighbridge.issueTicket}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={captureLiveKantaScale}
+                className="btn text-xs"
+              >
+                <Scale className="h-3.5 w-3.5 text-emerald-400" />
+                Capture RS-232 Kanta Weight
+              </button>
+              {scaleStatus && (
+                <span className="mono text-[11px] text-emerald-400">
+                  {scaleStatus}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="btn btn-ghost"
+              >
+                {t.weighbridge.close}
+              </button>
+              <button type="submit" className="btn btn-primary">
+                {t.weighbridge.issueTicket}
+              </button>
+            </div>
           </div>
         </form>
       )}

@@ -312,17 +312,37 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string ToastMessage { get => _toastMessage; set { _toastMessage = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsToastVisible)); } }
     public bool IsToastVisible => !string.IsNullOrWhiteSpace(ToastMessage);
 
-    // Sales & Spot Order Form Fields
+    // Sales & Spot Order Form Fields (Auto-Calculated via PricingEngineService)
     public IReadOnlyList<string> CustomerTypes { get; } = new[] { "WHOLESALER", "FOOD_PROCESSOR", "GOV_TENDER", "EXPORT_BUYER" };
-    public string SaleCustomer { get; set; } = "Khorasan Food Industries (Mashhad)";
-    public string SaleSaltGrade { get; set; } = "REFINED_IODIZED_25KG";
-    private double _saleQtyMt = 30;
-    public double SaleQtyMt { get => _saleQtyMt; set { _saleQtyMt = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaleTotalPreview)); } }
-    private double _salePriceAfn = 6800;
+    private string _saleCustomer = "Khorasan Food Industries (Mashhad)";
+    public string SaleCustomer { get => _saleCustomer; set { _saleCustomer = value; OnPropertyChanged(); RecalculateSaleQuote(); } }
+    private string _saleSaltGrade = "REFINED_IODIZED_25KG";
+    public string SaleSaltGrade { get => _saleSaltGrade; set { _saleSaltGrade = value; OnPropertyChanged(); RecalculateSaleQuote(); } }
+    private string _saleDestination = "ISLAM_QALA_EXPORT";
+    public string SaleDestination { get => _saleDestination; set { _saleDestination = value; OnPropertyChanged(); RecalculateSaleQuote(); } }
+    private double _saleQtyMt = 60;
+    public double SaleQtyMt { get => _saleQtyMt; set { _saleQtyMt = value; OnPropertyChanged(); RecalculateSaleQuote(); } }
+    private double _saleTargetMarginPct = 25;
+    public double SaleTargetMarginPct { get => _saleTargetMarginPct; set { _saleTargetMarginPct = value; OnPropertyChanged(); RecalculateSaleQuote(); } }
+    private double _salePriceAfn = 6630;
     public double SalePriceAfn { get => _salePriceAfn; set { _salePriceAfn = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaleTotalPreview)); } }
     public string SalePaymentMethod { get; set; } = "HAWALA";
     public string SaleHawalaRef { get; set; } = "Saraf Aria #HW-2026-NEW";
     public string SaleTotalPreview => FormatMoney(SaleQtyMt * SalePriceAfn);
+
+    private PriceQuote _currentSaleQuote = new();
+    public PriceQuote CurrentSaleQuote { get => _currentSaleQuote; private set { _currentSaleQuote = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaleBreakdownSummary)); OnPropertyChanged(nameof(SaleProfitPreview)); } }
+    public string SaleBreakdownSummary =>
+        $"Extraction {CurrentSaleQuote.ExtractionCostAfn:N0} + Processing/I2 {CurrentSaleQuote.ProcessingCostAfn:N0} + Bags {CurrentSaleQuote.PackagingCostAfn:N0} + MoMP {CurrentSaleQuote.MompRoyaltyAfn:N0} + Freight {CurrentSaleQuote.TransportCostAfn:N0} = Landed {CurrentSaleQuote.LandedCostPerMtAfn:N0} AFN/MT · Rule: {CurrentSaleQuote.PricingSource}";
+    public string SaleProfitPreview => $"Est. Net Profit: {FormatMoney(CurrentSaleQuote.EstimatedProfitAfn)} (${CurrentSaleQuote.FinalUnitPriceUsd:N2}/MT)";
+
+    private void RecalculateSaleQuote()
+    {
+        if (Contracts is null) return;
+        CurrentSaleQuote = PricingEngineService.CalculateQuote(
+            SaleCustomer, SaleSaltGrade, SaleDestination, SaleQtyMt, SaleTargetMarginPct, UsdToAfn, Contracts);
+        SalePriceAfn = CurrentSaleQuote.FinalUnitPriceAfn;
+    }
 
     // Customer CRM & Contract Form Fields
     public string NewCustName { get; set; } = "";
@@ -422,6 +442,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IssuePpeKitCommand = new RelayCommand(_ => IssuePpeKit());
         SyncQueueCommand = new RelayCommand(async _ => await SyncOfflineQueueAsync());
         ExportCsvCommand = new RelayCommand(_ => ExportCsv());
+        RecalculateSaleQuote();
     }
 
     public string FormatMoney(double amountAfn) =>
