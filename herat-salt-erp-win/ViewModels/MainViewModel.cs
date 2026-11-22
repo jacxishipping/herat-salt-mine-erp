@@ -73,6 +73,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<ExportShipment> ExportShipments { get; }
     public ObservableCollection<ConsumableItem> ConsumableItems { get; }
     public ObservableCollection<MineExpense> MineExpenses { get; }
+    public ObservableCollection<GovernmentObligation> GovernmentObligations { get; }
     public ObservableCollection<AuditLogEntry> AuditLogs { get; }
 
     // Reference Lists
@@ -210,6 +211,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         "Customers" => Strings["NavCustomers"],
         "Exports" => Strings["NavExports"],
         "Finance" => Strings["NavFinance"],
+        "GovObligations" => Strings["NavGovObligations"],
         "Accounting" => Strings["NavAccounting"],
         "Expenses" => Strings["NavExpenses"],
         "Suppliers" => Strings["NavSuppliers"],
@@ -538,6 +540,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string TotalPayrollPaidText => FormatMoney(PayrollRecords.Where(p => p.SalaryStatus == "PAID").Sum(p => p.NetPayableAfn));
     public string TotalPayrollUnpaidText => FormatMoney(PayrollRecords.Where(p => p.SalaryStatus != "PAID").Sum(p => p.NetPayableAfn));
 
+    // Government Obligations, Taxes & Public Build Projects (MoMP / CSR)
+    public IReadOnlyList<string> GovObligationTypes { get; } = new[] { "CASH_PAYMENT", "BUILD_PROJECT" };
+    public IReadOnlyList<string> GovCategories { get; } = new[]
+    {
+        "SURFACE_RENT", "COMMUNITY_BUILD", "ROAD_INFRASTRUCTURE", "ENV_RECLAMATION", "BRT_TAX", "SITE_SECURITY_GOV", "TRAINING_FUND", "OTHER_GOV"
+    };
+    public string NewGovTitle { get; set; } = "";
+    public string NewGovType { get; set; } = "BUILD_PROJECT";
+    public string NewGovCategory { get; set; } = "COMMUNITY_BUILD";
+    public string NewGovMinistry { get; set; } = "MoMP / Provincial Gov";
+    public double NewGovBudgetAfn { get; set; } = 500000;
+    public string NewGovDueDate { get; set; } = DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd");
+    public double GovInstallmentAfn { get; set; } = 100000;
+    public string GovTotalCommittedText => FormatMoney(GovernmentObligations.Sum(g => g.BudgetOrDueAfn));
+    public string GovTotalPaidText => FormatMoney(GovernmentObligations.Sum(g => g.PaidOrSpentAfn));
+    public string GovTotalRemainingText => FormatMoney(GovernmentObligations.Sum(g => g.RemainingAfn));
+    public string GovCompletedCountText => $"{GovernmentObligations.Count(g => g.Status == "COMPLETED")} / {GovernmentObligations.Count} Fulfilled";
+
     // Commands
     public ICommand SelectTabCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -568,6 +588,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand PostManualJournalCommand { get; }
     public ICommand PrintBalanceSheetCommand { get; }
     public ICommand RecordMineExpenseCommand { get; }
+    public ICommand AddGovObligationCommand { get; }
+    public ICommand PayGovObligationCommand { get; }
+    public ICommand CompleteGovObligationCommand { get; }
+    public ICommand PrintGovObligationsCommand { get; }
     public ICommand SettleInvoiceCommand { get; }
     public ICommand MarkRoyaltyFiledCommand { get; }
     public ICommand MarkRoyaltyPaidCommand { get; }
@@ -634,6 +658,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ExportShipments = new(_snapshot.ExportShipments);
         ConsumableItems = new(_snapshot.ConsumableItems);
         MineExpenses = new(_snapshot.MineExpenses);
+        GovernmentObligations = new(_snapshot.GovernmentObligations);
         AuditLogs = new(_snapshot.AuditLogs);
         ApplyTicketFilter();
         ApplyJournalFilter();
@@ -667,6 +692,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
         PostManualJournalCommand = new RelayCommand(_ => PostManualJournal());
         PrintBalanceSheetCommand = new RelayCommand(_ => PrintBalanceSheet());
         RecordMineExpenseCommand = new RelayCommand(_ => RecordMineExpense());
+        AddGovObligationCommand = new RelayCommand(_ => AddGovObligation());
+        PayGovObligationCommand = new RelayCommand(p => PayGovObligation(p as GovernmentObligation));
+        CompleteGovObligationCommand = new RelayCommand(p => CompleteGovObligation(p as GovernmentObligation));
+        PrintGovObligationsCommand = new RelayCommand(_ => PrintGovObligations());
         SettleInvoiceCommand = new RelayCommand(p => SettleInvoice(p as InvoiceRecord));
         MarkRoyaltyFiledCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "FILED"));
         MarkRoyaltyPaidCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "PAID"));
@@ -1667,6 +1696,105 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ShowToast($"Paid {unpaid.Count} salaries ({FormatMoney(totalPaid)})");
     }
 
+    private void AddGovObligation()
+    {
+        if (!CanViewFinancials || string.IsNullOrWhiteSpace(NewGovTitle) || NewGovBudgetAfn <= 0)
+        {
+            ShowToast("Owner/Finance role, title & budget required.");
+            return;
+        }
+        var gov = new GovernmentObligation
+        {
+            ObligationCode = $"GOV-{GovernmentObligations.Count + 1:D3}",
+            Title = NewGovTitle.Trim(),
+            ObligationType = NewGovType,
+            Category = NewGovCategory,
+            MinistryOrAgency = string.IsNullOrWhiteSpace(NewGovMinistry) ? "MoMP" : NewGovMinistry.Trim(),
+            BudgetOrDueAfn = Math.Round(NewGovBudgetAfn, 0),
+            PaidOrSpentAfn = 0,
+            DueDate = NewGovDueDate,
+            Status = "PENDING",
+            ReferenceDoc = $"MOMP-CL-{DateTime.Now:yyyyMMdd}"
+        };
+        GovernmentObligations.Insert(0, gov);
+        _snapshot.GovernmentObligations.Insert(0, gov);
+        NewGovTitle = "";
+        OnPropertyChanged(nameof(NewGovTitle));
+        AddAudit("government_obligations", gov.ObligationCode, "INSERT", $"Added {gov.ObligationType}: {gov.Title} ({gov.BudgetOrDueAfn:N0} AFN)");
+        PersistAndRefresh();
+        ShowToast($"Added government obligation {gov.ObligationCode}");
+    }
+
+    private void PayGovObligation(GovernmentObligation? gov)
+    {
+        if (gov is null || !CanViewFinancials || gov.RemainingAfn <= 0) return;
+        double amount = Math.Min(gov.RemainingAfn, GovInstallmentAfn > 0 ? GovInstallmentAfn : gov.RemainingAfn);
+        gov.PaidOrSpentAfn = Math.Round(gov.PaidOrSpentAfn + amount, 0);
+        gov.Status = gov.RemainingAfn <= 0 ? "COMPLETED" : "IN_PROGRESS";
+
+        PostDoubleEntry("5200", "1010", amount, $"Gov Obligation {gov.ObligationCode} ({gov.Category}): {gov.Title}");
+        var fin = new FinancialEntry
+        {
+            EntryType = "GOV_OBLIGATION",
+            Counterparty = $"{gov.MinistryOrAgency} — {gov.Title}",
+            Currency = "AFN",
+            Amount = amount,
+            LockedUsdToAfn = UsdToAfn,
+            Method = "BANK_TRANSFER",
+            Reference = gov.ObligationCode
+        };
+        FinancialLedger.Insert(0, fin);
+        _snapshot.FinancialLedger.Insert(0, fin);
+        AddAudit("government_obligations", gov.ObligationCode, "PAYMENT", $"Paid/Spent {amount:N0} AFN on {gov.Title} ({gov.ProgressPct:F0}%)");
+        System.Windows.Data.CollectionViewSource.GetDefaultView(GovernmentObligations)?.Refresh();
+        PersistAndRefresh();
+        ShowToast($"Recorded {FormatMoney(amount)} on {gov.ObligationCode} ({gov.ProgressPct:F0}%)");
+    }
+
+    private void CompleteGovObligation(GovernmentObligation? gov)
+    {
+        if (gov is null || !CanViewFinancials || gov.Status == "COMPLETED") return;
+        double rem = gov.RemainingAfn;
+        gov.PaidOrSpentAfn = gov.BudgetOrDueAfn;
+        gov.Status = "COMPLETED";
+        if (rem > 0)
+        {
+            PostDoubleEntry("5200", "1010", rem, $"Final fulfillment {gov.ObligationCode}: {gov.Title}");
+        }
+        AddAudit("government_obligations", gov.ObligationCode, "COMPLETED", $"Marked {gov.Title} 100% fulfilled");
+        System.Windows.Data.CollectionViewSource.GetDefaultView(GovernmentObligations)?.Refresh();
+        PersistAndRefresh();
+        ShowToast($"{gov.ObligationCode} marked 100% COMPLETED");
+    }
+
+    private void PrintGovObligations()
+    {
+        if (!CanViewFinancials) { ShowToast("Owner or Finance Officer role required."); return; }
+        var dlg = new PrintDialog();
+        if (dlg.ShowDialog() != true) return;
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Company: {SettingsCompanyName}  |  MoMP License: {SettingsMompLicense}");
+        sb.AppendLine($"Date: {DateTime.Now:yyyy-MM-dd HH:mm}  |  Total Committed: {GovTotalCommittedText}");
+        sb.AppendLine($"Total Paid/Spent: {GovTotalPaidText}  |  Remaining: {GovTotalRemainingText}");
+        sb.AppendLine("======================================================================");
+        foreach (var g in GovernmentObligations)
+        {
+            sb.AppendLine($"{g.ObligationCode} [{g.ObligationType}] {g.Title}");
+            sb.AppendLine($"   Agency: {g.MinistryOrAgency} | Due: {g.DueDate} | Status: {g.Status} ({g.ProgressPct:F0}%)");
+            sb.AppendLine($"   Budget: {g.BudgetOrDueAfn:N0} AFN | Paid/Spent: {g.PaidOrSpentAfn:N0} AFN | Remaining: {g.RemainingAfn:N0} AFN");
+            sb.AppendLine();
+        }
+        var doc = new FlowDocument
+        {
+            PageWidth = 580, PagePadding = new Thickness(24), FlowDirection = WindowFlowDirection,
+            FontFamily = new FontFamily("Consolas, Segoe UI"), FontSize = 10.5
+        };
+        doc.Blocks.Add(new Paragraph(new Bold(new Run("HERAT SALT MINE — GOVERNMENT OBLIGATIONS & CSR COMPLIANCE STATEMENT"))) { TextAlignment = TextAlignment.Center });
+        doc.Blocks.Add(new Paragraph(new Run(sb.ToString())));
+        dlg.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, $"GovObligations-{DateTime.Now:yyyy-MM-dd}");
+        ShowToast("Printed Government Obligations & CSR Statement");
+    }
+
     private void RefreshKpis()
     {
         OnPropertyChanged(nameof(KpiExtractedText));
@@ -1700,6 +1828,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(TotalPayrollDueText));
         OnPropertyChanged(nameof(TotalPayrollPaidText));
         OnPropertyChanged(nameof(TotalPayrollUnpaidText));
+        OnPropertyChanged(nameof(GovTotalCommittedText));
+        OnPropertyChanged(nameof(GovTotalPaidText));
+        OnPropertyChanged(nameof(GovTotalRemainingText));
+        OnPropertyChanged(nameof(GovCompletedCountText));
         OnPropertyChanged(nameof(PendingSyncCount));
         OnPropertyChanged(nameof(PendingSyncLabel));
         OnPropertyChanged(nameof(HasPendingSync));

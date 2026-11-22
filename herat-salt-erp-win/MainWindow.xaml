@@ -94,6 +94,8 @@
                             <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                          Content="{Binding Strings[NavFinance]}" Command="{Binding SelectTabCommand}" CommandParameter="Finance" />
                             <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavGovObligations]}" Command="{Binding SelectTabCommand}" CommandParameter="GovObligations" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                          Content="{Binding Strings[NavAccounting]}" Command="{Binding SelectTabCommand}" CommandParameter="Accounting" />
                             <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                          Content="{Binding Strings[NavExpenses]}" Command="{Binding SelectTabCommand}" CommandParameter="Expenses" />
@@ -1653,6 +1655,113 @@
                                         <DataGridTextColumn Header="Payee" Binding="{Binding Payee}" Width="150" />
                                         <DataGridTextColumn Header="GL Acct" Binding="{Binding PaymentAccountCode}" Width="65" />
                                         <DataGridTextColumn Header="Amount (AFN)" Binding="{Binding AmountAfn, StringFormat=N0}" Width="105" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 16. GOVERNMENT OBLIGATIONS, TAXES & PUBLIC BUILD PROJECTS (MoMP / CSR) -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=GovObligations}">
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="32"
+                                Visibility="{Binding CannotViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Access Restricted: Only Mine Owner or Finance Officer can manage Government Obligations &amp; CSR Build Projects."
+                                       HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <StackPanel Visibility="{Binding CanViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <Grid Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Strings[NavGovObligations]}" Style="{StaticResource PageTitleStyle}" />
+                                    <TextBlock Text="Track all non-royalty government payments (Surface Rent, BRT Tax, NEPA Bond, Security) &amp; public CSR build commitments (Schools, Roads, Clinics, Water Wells)."
+                                               Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <Button Content="Print Compliance Statement" Command="{Binding PrintGovObligationsCommand}"
+                                        Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+
+                            <UniformGrid Columns="4" Margin="0,0,0,14">
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Committed / Budget" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GovTotalCommittedText}" Style="{StaticResource MonoTextStyle}" FontSize="17" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Paid / Spent to Date" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GovTotalPaidText}" Style="{StaticResource MonoTextStyle}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Remaining Obligation" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GovTotalRemainingText}" Style="{StaticResource MonoTextStyle}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Compliance Progress" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding GovCompletedCountText}" Style="{StaticResource MonoTextStyle}" FontSize="15" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+
+                            <!-- Add Custom Government Payment or Build Commitment -->
+                            <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="ADD GOVERNMENT PAYMENT OR PUBLIC BUILD COMMITMENT" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                    <UniformGrid Columns="7">
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Obligation / Project Title" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding NewGovTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Type" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <ComboBox ItemsSource="{Binding GovObligationTypes}" SelectedItem="{Binding NewGovType}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Category" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <ComboBox ItemsSource="{Binding GovCategories}" SelectedItem="{Binding NewGovCategory}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Ministry / Agency" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding NewGovMinistry, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Budget / Due (AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding NewGovBudgetAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Installment (AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding GovInstallmentAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <Button Content="+ Add Commitment" Command="{Binding AddGovObligationCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
+                                    </UniformGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                                <DataGrid ItemsSource="{Binding GovernmentObligations}" Style="{StaticResource SaaSDataGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Code" Binding="{Binding ObligationCode}" Width="75" />
+                                        <DataGridTextColumn Header="Type" Binding="{Binding ObligationType}" Width="110" />
+                                        <DataGridTextColumn Header="Government Payment / Public Build Project" Binding="{Binding Title}" Width="*" />
+                                        <DataGridTextColumn Header="Agency" Binding="{Binding MinistryOrAgency}" Width="140" />
+                                        <DataGridTextColumn Header="Budget (AFN)" Binding="{Binding BudgetOrDueAfn, StringFormat=N0}" Width="95" />
+                                        <DataGridTextColumn Header="Paid/Spent" Binding="{Binding PaidOrSpentAfn, StringFormat=N0}" Width="90" />
+                                        <DataGridTextColumn Header="Done %" Binding="{Binding ProgressPct, StringFormat='{}{0:F0}%'}" Width="60" />
+                                        <DataGridTemplateColumn Header="Actions (GL Auto-Post)" Width="185">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button Content="+ Pay/Spend" Style="{StaticResource PrimaryButtonStyle}" Padding="6,3" Margin="0,0,4,0"
+                                                                Command="{Binding DataContext.PayGovObligationCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                        <Button Content="Mark Done" Style="{StaticResource SecondaryButtonStyle}" Padding="6,3"
+                                                                Command="{Binding DataContext.CompleteGovObligationCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Border>

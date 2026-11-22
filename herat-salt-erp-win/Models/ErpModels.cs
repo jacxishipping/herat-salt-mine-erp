@@ -360,6 +360,22 @@ public sealed class MineExpense
     public string RecordedBy { get; set; } = "";
 }
 
+public sealed class GovernmentObligation
+{
+    public string ObligationCode { get; set; } = "";
+    public string Title { get; set; } = "";
+    public string ObligationType { get; set; } = "CASH_PAYMENT"; // CASH_PAYMENT, BUILD_PROJECT
+    public string Category { get; set; } = "SURFACE_RENT";
+    public string MinistryOrAgency { get; set; } = "MoMP";
+    public double BudgetOrDueAfn { get; set; }
+    public double PaidOrSpentAfn { get; set; }
+    public double RemainingAfn => Math.Max(0, BudgetOrDueAfn - PaidOrSpentAfn);
+    public double ProgressPct => BudgetOrDueAfn > 0 ? Math.Min(100, Math.Round((PaidOrSpentAfn / BudgetOrDueAfn) * 100.0, 1)) : 0;
+    public string DueDate { get; set; } = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
+    public string Status { get; set; } = "IN_PROGRESS"; // PENDING, IN_PROGRESS, COMPLETED
+    public string ReferenceDoc { get; set; } = "";
+}
+
 public sealed class ErpLocalSnapshot
 {
     public double UsdToAfn { get; set; } = 71.50;
@@ -388,5 +404,6 @@ public sealed class ErpLocalSnapshot
     public List<ExportShipment> ExportShipments { get; set; } = new();
     public List<ConsumableItem> ConsumableItems { get; set; } = new();
     public List<MineExpense> MineExpenses { get; set; } = new();
+    public List<GovernmentObligation> GovernmentObligations { get; set; } = new();
     public List<AuditLogEntry> AuditLogs { get; set; } = new();
 }

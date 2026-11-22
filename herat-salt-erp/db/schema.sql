@@ -470,4 +470,20 @@ CREATE TABLE consumable_items (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE government_obligations (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  obligation_code    VARCHAR(32) UNIQUE NOT NULL,
+  title              VARCHAR(180) NOT NULL,
+  obligation_type    VARCHAR(24) NOT NULL CHECK (obligation_type IN ('CASH_PAYMENT','BUILD_PROJECT')),
+  category           VARCHAR(40) NOT NULL,
+  ministry_or_agency VARCHAR(120) NOT NULL,
+  budget_or_due_afn  NUMERIC(16, 2) NOT NULL CHECK (budget_or_due_afn > 0),
+  paid_or_spent_afn  NUMERIC(16, 2) NOT NULL DEFAULT 0 CHECK (paid_or_spent_afn >= 0),
+  due_date           DATE NOT NULL,
+  status             VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS' CHECK (status IN ('PENDING','IN_PROGRESS','COMPLETED')),
+  reference_doc      VARCHAR(80),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
 

@@ -104,6 +104,7 @@ public sealed class ErpDataService
                     if (loaded.ExportShipments.Count == 0) loaded.ExportShipments = BuildSeedSnapshot().ExportShipments;
                     if (loaded.ConsumableItems.Count == 0) loaded.ConsumableItems = BuildSeedSnapshot().ConsumableItems;
                     if (loaded.MineExpenses.Count == 0) loaded.MineExpenses = BuildSeedSnapshot().MineExpenses;
+                    if (loaded.GovernmentObligations.Count == 0) loaded.GovernmentObligations = BuildSeedSnapshot().GovernmentObligations;
                     return loaded;
                 }
             }
@@ -230,6 +231,8 @@ public sealed class ErpDataService
             sb.AppendLine($"QC_LAB_COA,\"{q.TestCode}\",\"{q.BatchCode} ({q.SaltGrade})\",{q.NaClPurityPct:F1},NaCl%,{q.Status}");
         foreach (var x in snapshot.ExportShipments)
             sb.AppendLine($"EXPORT_CUSTOMS,\"{x.CustomsDeclNo}\",\"{x.BuyerName} ({x.BorderPost})\",{x.TonnageMt:F1},MT,{x.Status}");
+        foreach (var g in snapshot.GovernmentObligations)
+            sb.AppendLine($"GOV_OBLIGATION,\"{g.ObligationCode}\",\"{g.Title} ({g.MinistryOrAgency})\",{g.PaidOrSpentAfn:F2},AFN,{g.Status} ({g.ProgressPct:F0}%)");
         File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
         return path;
     }
@@ -391,6 +394,16 @@ public sealed class ErpDataService
             new() { ExpenseCode = "EXP-OP-0411", Date = "2026-11-17 16:40", Category = "EQUIPMENT_REPAIR", Description = "Emergency hydraulic hose replacement on Komatsu WA470", Payee = "Herat Heavy Hydraulics", AmountAfn = 32400, PaymentAccountCode = "1000", ReceiptRef = "RCP-8794", RecordedBy = "Finance Officer" },
             new() { ExpenseCode = "EXP-OP-0410", Date = "2026-11-17 11:20", Category = "DIESEL_GENERATOR", Description = "Camp & Iodization Plant 150kVA generator diesel refill", Payee = "Ghoryan Fuel Station", AmountAfn = 24000, PaymentAccountCode = "1000", ReceiptRef = "RCP-8788", RecordedBy = "Site Ops Manager" },
             new() { ExpenseCode = "EXP-OP-0409", Date = "2026-11-16 14:05", Category = "ROAD_TOLL_CUSTOMS", Description = "Herat–Islam Qala highway weigh-station & municipal tolls", Payee = "Herat Transport Union", AmountAfn = 9500, PaymentAccountCode = "1020", ReceiptRef = "HW-TOLL-19", RecordedBy = "Finance Officer" }
+        },
+        GovernmentObligations = new()
+        {
+            new() { ObligationCode = "GOV-001", Title = "Annual Surface Rent / Mining Area Lease", ObligationType = "CASH_PAYMENT", Category = "SURFACE_RENT", MinistryOrAgency = "MoMP (Mining Cadastre)", BudgetOrDueAfn = 650000, PaidOrSpentAfn = 650000, DueDate = "2026-12-31", Status = "COMPLETED", ReferenceDoc = "MOMP-SR-2026-114" },
+            new() { ObligationCode = "GOV-002", Title = "Ghoryan Village Primary School & Water Well Build", ObligationType = "BUILD_PROJECT", Category = "COMMUNITY_BUILD", MinistryOrAgency = "Provincial Gov / Community CSR", BudgetOrDueAfn = 2400000, PaidOrSpentAfn = 1450000, DueDate = "2027-03-20", Status = "IN_PROGRESS", ReferenceDoc = "CSR-GHR-2026-02" },
+            new() { ObligationCode = "GOV-003", Title = "12km Public Mine-to-Highway Access Road Grading", ObligationType = "BUILD_PROJECT", Category = "ROAD_INFRASTRUCTURE", MinistryOrAgency = "Ministry of Public Works / MoMP", BudgetOrDueAfn = 1850000, PaidOrSpentAfn = 920000, DueDate = "2027-02-15", Status = "IN_PROGRESS", ReferenceDoc = "MPW-RD-2026-08" },
+            new() { ObligationCode = "GOV-004", Title = "Environmental Rehabilitation & Dust Mitigation Bond", ObligationType = "CASH_PAYMENT", Category = "ENV_RECLAMATION", MinistryOrAgency = "NEPA / MoMP", BudgetOrDueAfn = 900000, PaidOrSpentAfn = 450000, DueDate = "2026-12-15", Status = "IN_PROGRESS", ReferenceDoc = "NEPA-ENV-2026-41" },
+            new() { ObligationCode = "GOV-005", Title = "Quarterly Business Receipts Tax (BRT) & Mustofiat Filing", ObligationType = "CASH_PAYMENT", Category = "BRT_TAX", MinistryOrAgency = "MoF / Herat Mustofiat", BudgetOrDueAfn = 540000, PaidOrSpentAfn = 270000, DueDate = "2026-11-30", Status = "IN_PROGRESS", ReferenceDoc = "MOF-BRT-Q4-2026" },
+            new() { ObligationCode = "GOV-006", Title = "Mine Perimeter Security & Protection Post Support", ObligationType = "CASH_PAYMENT", Category = "SITE_SECURITY_GOV", MinistryOrAgency = "MoI / Provincial Security", BudgetOrDueAfn = 480000, PaidOrSpentAfn = 360000, DueDate = "2026-12-05", Status = "IN_PROGRESS", ReferenceDoc = "MOI-SEC-2026-19" },
+            new() { ObligationCode = "GOV-007", Title = "Local Afghan Mining Workforce Training & Clinic Support", ObligationType = "BUILD_PROJECT", Category = "TRAINING_FUND", MinistryOrAgency = "MoMP Social Services", BudgetOrDueAfn = 750000, PaidOrSpentAfn = 250000, DueDate = "2027-01-30", Status = "IN_PROGRESS", ReferenceDoc = "MOMP-SOC-2026-07" }
         },
         AuditLogs = new()
         {
