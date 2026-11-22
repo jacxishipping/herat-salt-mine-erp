@@ -1,0 +1,16 @@
+{
+  "name": "Herat Salt Mine ERP",
+  "short_name": "HeratSaltERP",
+  "description": "Offline-first Salt Mine ERP & Weighbridge Operations for Ghoryan & Kuhsan, Herat",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0d9488",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
