@@ -711,8 +711,125 @@
 
                             <!-- Trial Balance Status Banner -->
                             <Border Style="{StaticResource TerminalBoxStyle}" Padding="12,9" Margin="0,0,0,14">
-                                <TextBlock Text="{Binding TrialBalanceCheckText}" Style="{StaticResource MonoTextStyle}"
-                                           FontSize="12" FontWeight="SemiBold" Foreground="#10B981" />
+                                <StackPanel>
+                                    <TextBlock Text="{Binding TrialBalanceCheckText}" Style="{StaticResource MonoTextStyle}"
+                                               FontSize="12" FontWeight="SemiBold" Foreground="#10B981" />
+                                    <TextBlock Text="{Binding BalanceSheetEquationText}" Style="{StaticResource MonoTextStyle}"
+                                               FontSize="11.5" Foreground="#CBD5E1" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- DEDICATED BALANCE SHEET (STATEMENT OF FINANCIAL POSITION) -->
+                            <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,12">
+                                        <StackPanel>
+                                            <TextBlock Text="BALANCE SHEET (STATEMENT OF FINANCIAL POSITION)" Style="{StaticResource SectionHeaderStyle}" />
+                                            <TextBlock Text="Live double-entry snapshot: Assets = Liabilities + Owner's Equity + Current Period Net Profit"
+                                                       FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        <Button Content="Print Balance Sheet" Command="{Binding PrintBalanceSheetCommand}"
+                                                Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- LEFT: ASSETS -->
+                                        <Border Grid.Column="0" Background="{DynamicResource BgElevatedBrush}" CornerRadius="8" Padding="14"
+                                                BorderBrush="{DynamicResource BorderHairBrush}" BorderThickness="1">
+                                            <DockPanel LastChildFill="False">
+                                                <TextBlock DockPanel.Dock="Top" Text="ASSETS" FontSize="11.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,8" />
+                                                <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding BalanceSheetAssets}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <TextBlock FontSize="12">
+                                                                    <Run Text="{Binding Code}" Foreground="{DynamicResource TextMutedBrush}" /><Run Text="  " /><Run Text="{Binding Name}" />
+                                                                </TextBlock>
+                                                                <TextBlock HorizontalAlignment="Right" Style="{StaticResource MonoTextStyle}" FontSize="12"
+                                                                           Text="{Binding BalanceAfn, StringFormat='{}{0:N0} ؋'}" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource BorderHairBrush}" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,10,0,0">
+                                                    <Grid>
+                                                        <TextBlock Text="TOTAL ASSETS" FontSize="12.5" FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding GlTotalAssetsText}" HorizontalAlignment="Right"
+                                                                   Style="{StaticResource MonoTextStyle}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" />
+                                                    </Grid>
+                                                </Border>
+                                            </DockPanel>
+                                        </Border>
+
+                                        <!-- RIGHT: LIABILITIES & EQUITY -->
+                                        <Border Grid.Column="2" Background="{DynamicResource BgElevatedBrush}" CornerRadius="8" Padding="14"
+                                                BorderBrush="{DynamicResource BorderHairBrush}" BorderThickness="1">
+                                            <StackPanel>
+                                                <TextBlock Text="LIABILITIES" FontSize="11.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource WarningBrush}" Margin="0,0,0,8" />
+                                                <ItemsControl ItemsSource="{Binding BalanceSheetLiabilities}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <TextBlock FontSize="12">
+                                                                    <Run Text="{Binding Code}" Foreground="{DynamicResource TextMutedBrush}" /><Run Text="  " /><Run Text="{Binding Name}" />
+                                                                </TextBlock>
+                                                                <TextBlock HorizontalAlignment="Right" Style="{StaticResource MonoTextStyle}" FontSize="12"
+                                                                           Text="{Binding BalanceAfn, StringFormat='{}{0:N0} ؋'}" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <Grid Margin="0,4,0,12">
+                                                    <TextBlock Text="Subtotal Liabilities" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBlock Text="{Binding GlTotalLiabilitiesText}" HorizontalAlignment="Right"
+                                                               Style="{StaticResource MonoTextStyle}" FontSize="12" FontWeight="SemiBold" />
+                                                </Grid>
+
+                                                <TextBlock Text="OWNER'S EQUITY &amp; RETAINED EARNINGS" FontSize="11.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AccentBrush}" Margin="0,4,0,8" />
+                                                <ItemsControl ItemsSource="{Binding BalanceSheetEquity}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <TextBlock FontSize="12">
+                                                                    <Run Text="{Binding Code}" Foreground="{DynamicResource TextMutedBrush}" /><Run Text="  " /><Run Text="{Binding Name}" />
+                                                                </TextBlock>
+                                                                <TextBlock HorizontalAlignment="Right" Style="{StaticResource MonoTextStyle}" FontSize="12"
+                                                                           Text="{Binding BalanceAfn, StringFormat='{}{0:N0} ؋'}" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <Grid Margin="0,0,0,6">
+                                                    <TextBlock Text="NET  Current Period Net Profit / (Loss)" FontSize="12" Foreground="{DynamicResource SuccessBrush}" />
+                                                    <TextBlock Text="{Binding GlNetProfitText}" HorizontalAlignment="Right"
+                                                               Style="{StaticResource MonoTextStyle}" FontSize="12" Foreground="{DynamicResource SuccessBrush}" />
+                                                </Grid>
+                                                <Grid Margin="0,4,0,0">
+                                                    <TextBlock Text="Subtotal Owner's Equity" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBlock Text="{Binding GlTotalEquityWithProfitText}" HorizontalAlignment="Right"
+                                                               Style="{StaticResource MonoTextStyle}" FontSize="12" FontWeight="SemiBold" />
+                                                </Grid>
+
+                                                <Border BorderBrush="{DynamicResource BorderHairBrush}" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,10,0,0">
+                                                    <Grid>
+                                                        <TextBlock Text="TOTAL LIABILITIES + EQUITY" FontSize="12.5" FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding GlTotalLiabEquityText}" HorizontalAlignment="Right"
+                                                                   Style="{StaticResource MonoTextStyle}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" />
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
                             </Border>
 
                             <!-- Manual Balanced Journal Entry Form -->

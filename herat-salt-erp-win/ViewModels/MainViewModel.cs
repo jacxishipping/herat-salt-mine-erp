@@ -404,7 +404,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _glFilterAccount = "ALL";
     public string GlFilterAccount { get => _glFilterAccount; set { _glFilterAccount = value; OnPropertyChanged(); ApplyJournalFilter(); } }
 
+    public List<GlAccount> BalanceSheetAssets => ChartOfAccounts.Where(a => a.AccountType == "ASSET").ToList();
+    public List<GlAccount> BalanceSheetLiabilities => ChartOfAccounts.Where(a => a.AccountType == "LIABILITY").ToList();
+    public List<GlAccount> BalanceSheetEquity => ChartOfAccounts.Where(a => a.AccountType == "EQUITY").ToList();
+
     public string GlTotalAssetsText => FormatMoney(ChartOfAccounts.Where(a => a.AccountType == "ASSET").Sum(a => a.BalanceAfn));
+    public string GlTotalLiabilitiesText => FormatMoney(ChartOfAccounts.Where(a => a.AccountType == "LIABILITY").Sum(a => a.BalanceAfn));
+    public string GlTotalEquityWithProfitText => FormatMoney(
+        ChartOfAccounts.Where(a => a.AccountType == "EQUITY").Sum(a => a.BalanceAfn) +
+        (ChartOfAccounts.Where(a => a.AccountType == "REVENUE").Sum(a => a.BalanceAfn) -
+         ChartOfAccounts.Where(a => a.AccountType == "EXPENSE").Sum(a => a.BalanceAfn)));
     public string GlTotalLiabEquityText => FormatMoney(
         ChartOfAccounts.Where(a => a.AccountType is "LIABILITY" or "EQUITY").Sum(a => a.BalanceAfn) +
         (ChartOfAccounts.Where(a => a.AccountType == "REVENUE").Sum(a => a.BalanceAfn) -
@@ -414,6 +423,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string GlNetProfitText => FormatMoney(
         ChartOfAccounts.Where(a => a.AccountType == "REVENUE").Sum(a => a.BalanceAfn) -
         ChartOfAccounts.Where(a => a.AccountType == "EXPENSE").Sum(a => a.BalanceAfn));
+    public string BalanceSheetEquationText
+    {
+        get
+        {
+            double assets = ChartOfAccounts.Where(a => a.AccountType == "ASSET").Sum(a => a.BalanceAfn);
+            double liabEq = ChartOfAccounts.Where(a => a.AccountType is "LIABILITY" or "EQUITY").Sum(a => a.BalanceAfn)
+                          + ChartOfAccounts.Where(a => a.AccountType == "REVENUE").Sum(a => a.BalanceAfn)
+                          - ChartOfAccounts.Where(a => a.AccountType == "EXPENSE").Sum(a => a.BalanceAfn);
+            var ok = Math.Abs(assets - liabEq) < 0.01;
+            return $"Balance Sheet Equation: Assets ({FormatMoney(assets)}) = Liabilities + Equity ({FormatMoney(liabEq)}) · {(ok ? "BALANCED" : "UNBALANCED")}";
+        }
+    }
     public string TrialBalanceCheckText
     {
         get
@@ -453,6 +474,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand PaySupplierBillCommand { get; }
     public ICommand PostFinancialEntryCommand { get; }
     public ICommand PostManualJournalCommand { get; }
+    public ICommand PrintBalanceSheetCommand { get; }
     public ICommand SettleInvoiceCommand { get; }
     public ICommand MarkRoyaltyFiledCommand { get; }
     public ICommand MarkRoyaltyPaidCommand { get; }
@@ -526,6 +548,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         PaySupplierBillCommand = new RelayCommand(p => PaySupplierBill(p as SupplierBill));
         PostFinancialEntryCommand = new RelayCommand(_ => PostFinancialEntry());
         PostManualJournalCommand = new RelayCommand(_ => PostManualJournal());
+        PrintBalanceSheetCommand = new RelayCommand(_ => PrintBalanceSheet());
         SettleInvoiceCommand = new RelayCommand(p => SettleInvoice(p as InvoiceRecord));
         MarkRoyaltyFiledCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "FILED"));
         MarkRoyaltyPaidCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "PAID"));
@@ -1088,6 +1111,44 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ShowToast($"Posted balanced journal {JournalEntries[0].EntryNumber} ({JeAmountAfn:N0} AFN)");
     }
 
+    private void PrintBalanceSheet()
+    {
+        if (!CanViewFinancials) { ShowToast("Owner or Finance Officer role required."); return; }
+        var dlg = new PrintDialog();
+        if (dlg.ShowDialog() != true) return;
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"As of: {DateTime.Now:yyyy-MM-dd HH:mm}  |  FX: 1 USD = {UsdToAfn:F2} AFN");
+        sb.AppendLine("------------------------------------------------------");
+        sb.AppendLine("ASSETS");
+        foreach (var a in BalanceSheetAssets)
+            sb.AppendLine($"  {a.Code}  {a.Name,-34} {a.BalanceAfn,14:N0} AFN");
+        sb.AppendLine($"  TOTAL ASSETS: {GlTotalAssetsText}");
+        sb.AppendLine();
+        sb.AppendLine("LIABILITIES");
+        foreach (var l in BalanceSheetLiabilities)
+            sb.AppendLine($"  {l.Code}  {l.Name,-34} {l.BalanceAfn,14:N0} AFN");
+        sb.AppendLine($"  TOTAL LIABILITIES: {GlTotalLiabilitiesText}");
+        sb.AppendLine();
+        sb.AppendLine("OWNER'S EQUITY");
+        foreach (var eq in BalanceSheetEquity)
+            sb.AppendLine($"  {eq.Code}  {eq.Name,-34} {eq.BalanceAfn,14:N0} AFN");
+        sb.AppendLine($"  NET   Current Period Net Profit/(Loss)     {GlNetProfitText,14}");
+        sb.AppendLine($"  TOTAL EQUITY: {GlTotalEquityWithProfitText}");
+        sb.AppendLine("------------------------------------------------------");
+        sb.AppendLine($"TOTAL LIABILITIES + EQUITY: {GlTotalLiabEquityText}");
+        sb.AppendLine(TrialBalanceCheckText);
+
+        var doc = new FlowDocument
+        {
+            PageWidth = 540, PagePadding = new Thickness(24), FlowDirection = WindowFlowDirection,
+            FontFamily = new FontFamily("Consolas, Segoe UI"), FontSize = 11
+        };
+        doc.Blocks.Add(new Paragraph(new Bold(new Run("HERAT SALT MINE — BALANCE SHEET (STATEMENT OF FINANCIAL POSITION)"))) { TextAlignment = TextAlignment.Center });
+        doc.Blocks.Add(new Paragraph(new Run(sb.ToString())));
+        dlg.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, $"BalanceSheet-{DateTime.Now:yyyy-MM-dd}");
+        ShowToast("Printed Balance Sheet");
+    }
+
     private void AddCustomer()
     {
         if (string.IsNullOrWhiteSpace(NewCustName)) { ShowToast("Enter customer company name."); return; }
@@ -1136,11 +1197,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(KpiRoyaltyText));
         OnPropertyChanged(nameof(KpiFuelText));
         OnPropertyChanged(nameof(SaleTotalPreview));
+        OnPropertyChanged(nameof(BalanceSheetAssets));
+        OnPropertyChanged(nameof(BalanceSheetLiabilities));
+        OnPropertyChanged(nameof(BalanceSheetEquity));
         OnPropertyChanged(nameof(GlTotalAssetsText));
+        OnPropertyChanged(nameof(GlTotalLiabilitiesText));
+        OnPropertyChanged(nameof(GlTotalEquityWithProfitText));
         OnPropertyChanged(nameof(GlTotalLiabEquityText));
         OnPropertyChanged(nameof(GlRevenueText));
         OnPropertyChanged(nameof(GlExpensesText));
         OnPropertyChanged(nameof(GlNetProfitText));
+        OnPropertyChanged(nameof(BalanceSheetEquationText));
         OnPropertyChanged(nameof(TrialBalanceCheckText));
         OnPropertyChanged(nameof(PendingSyncCount));
         OnPropertyChanged(nameof(PendingSyncLabel));
