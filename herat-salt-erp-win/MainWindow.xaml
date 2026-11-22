@@ -47,6 +47,14 @@
                                  Content="{Binding Strings[NavProcessing]}" Command="{Binding SelectTabCommand}" CommandParameter="Processing" />
                 </StackPanel>
 
+                <TextBlock DockPanel.Dock="Top" Text="COMMERCIAL &amp; SALES" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
+                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                 Content="{Binding Strings[NavSales]}" Command="{Binding SelectTabCommand}" CommandParameter="Sales" />
+                    <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                 Content="{Binding Strings[NavCustomers]}" Command="{Binding SelectTabCommand}" CommandParameter="Customers" />
+                </StackPanel>
+
                 <TextBlock DockPanel.Dock="Top" Text="FINANCE &amp; GOVERNANCE" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
                 <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
                     <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
@@ -408,6 +416,134 @@
                                         <DataGridTextColumn Header="Grade" Binding="{Binding SaltGrade}" Width="165" />
                                         <DataGridTextColumn Header="MT" Binding="{Binding QuantityMt}" Width="75" />
                                         <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- 5. SALES & SPOT ORDERS (SELL SALT) -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Sales}">
+                        <TextBlock Text="{Binding Strings[NavSales]}" Style="{StaticResource PageTitleStyle}" />
+                        <TextBlock Text="Create spot sales &amp; contract orders (AFN/USD locked FX), auto-generate invoices, and track settlements."
+                                   Style="{StaticResource SubtitleStyle}" Margin="0,4,0,14" />
+
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="NEW SALT SALE / DISPATCH ORDER" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="3" Margin="0,0,0,10">
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Customer / Offtaker" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SaleCustomer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Salt Grade / SKU" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding SaltGrades}" SelectedItem="{Binding SaleSaltGrade}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Payment Method" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding PaymentMethods}" SelectedItem="{Binding SalePaymentMethod}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                    </StackPanel>
+                                </UniformGrid>
+                                <UniformGrid Columns="4" Margin="0,0,0,12">
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Quantity (MT)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SaleQtyMt, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Price (AFN / MT)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SalePriceAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,8,0">
+                                        <TextBlock Text="Hawala / Saraf Ref" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding SaleHawalaRef, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Order Total" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBlock Text="{Binding SaleTotalPreview}" Style="{StaticResource MonoTextStyle}" Foreground="{DynamicResource SuccessBrush}" FontWeight="Bold" FontSize="15" Margin="2,4,0,0" />
+                                    </StackPanel>
+                                </UniformGrid>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="Confirm Sale &amp; Generate Invoice" Command="{Binding CreateSaleOrderCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                            <DataGrid ItemsSource="{Binding Invoices}" Style="{StaticResource SaaSDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Invoice #" Binding="{Binding InvoiceNumber}" Width="125" />
+                                    <DataGridTextColumn Header="Source" Binding="{Binding TicketNumber}" Width="125" />
+                                    <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName}" Width="*" />
+                                    <DataGridTextColumn Header="Qty (MT)" Binding="{Binding QuantityMt}" Width="80" />
+                                    <DataGridTextColumn Header="Total AFN" Binding="{Binding TotalAfn, StringFormat=N0}" Width="105" />
+                                    <DataGridTextColumn Header="Balance AFN" Binding="{Binding BalanceAfn, StringFormat=N0}" Width="105" />
+                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="85" />
+                                    <DataGridTemplateColumn Header="Settle" Width="115">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Mark Paid" Style="{StaticResource PrimaryButtonStyle}" Padding="7,3"
+                                                        Command="{Binding DataContext.SettleInvoiceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- 6. CUSTOMERS & CONTRACTS (CRM) -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Customers}">
+                        <TextBlock Text="{Binding Strings[NavCustomers]}" Style="{StaticResource PageTitleStyle}" />
+                        <TextBlock Text="Manage Herat wholesalers, food processors, government tenders, export buyers, credit limits &amp; tonnage contracts."
+                                   Style="{StaticResource SubtitleStyle}" Margin="0,4,0,14" />
+
+                        <!-- Add Customer Form -->
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="ADD CUSTOMER / OFFTAKER" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="4">
+                                    <TextBox Text="{Binding NewCustName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,8,0" />
+                                    <ComboBox ItemsSource="{Binding CustomerTypes}" SelectedItem="{Binding NewCustType}" Style="{StaticResource SaaSComboBoxStyle}" Margin="0,0,8,0" />
+                                    <TextBox Text="{Binding NewCustCreditAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,8,0" />
+                                    <Button Content="+ Add Customer" Command="{Binding AddCustomerCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Customer Directory & Credit Utilization -->
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="0" Margin="0,0,0,14">
+                            <DataGrid ItemsSource="{Binding Customers}" Style="{StaticResource SaaSDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="115" />
+                                    <DataGridTextColumn Header="Company Name" Binding="{Binding CompanyName}" Width="*" />
+                                    <DataGridTextColumn Header="Segment" Binding="{Binding CustomerType}" Width="135" />
+                                    <DataGridTextColumn Header="Credit Limit (AFN)" Binding="{Binding CreditLimitAfn, StringFormat=N0}" Width="130" />
+                                    <DataGridTextColumn Header="Outstanding (AFN)" Binding="{Binding OutstandingAfn, StringFormat=N0}" Width="130" />
+                                    <DataGridTextColumn Header="Used %" Binding="{Binding CreditPct, StringFormat={}{0}%}" Width="75" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+
+                        <!-- Long-Term Tonnage Contracts -->
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="LONG-TERM TONNAGE CONTRACTS" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="5" Margin="0,0,0,12">
+                                    <TextBox Text="{Binding NewCtrCustomer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
+                                    <ComboBox ItemsSource="{Binding SaltGrades}" SelectedItem="{Binding NewCtrGrade}" Style="{StaticResource SaaSComboBoxStyle}" Margin="0,0,6,0" />
+                                    <TextBox Text="{Binding NewCtrMt, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
+                                    <TextBox Text="{Binding NewCtrPriceAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
+                                    <Button Content="+ Sign Contract" Command="{Binding AddContractCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                </UniformGrid>
+                                <DataGrid ItemsSource="{Binding Contracts}" Style="{StaticResource SaaSDataGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Contract #" Binding="{Binding ContractCode}" Width="130" />
+                                        <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName}" Width="*" />
+                                        <DataGridTextColumn Header="Grade" Binding="{Binding SaltGrade}" Width="165" />
+                                        <DataGridTextColumn Header="Delivered / Total MT" Binding="{Binding DeliveredMt}" Width="130" />
+                                        <DataGridTextColumn Header="Rate AFN/MT" Binding="{Binding TierPriceAfnPerMt, StringFormat=N0}" Width="105" />
+                                        <DataGridTextColumn Header="Progress" Binding="{Binding ProgressPct, StringFormat={}{0}%}" Width="80" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </StackPanel>

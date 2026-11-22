@@ -191,6 +191,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         "Weighbridge" => Strings["NavWeighbridge"],
         "Extraction" => Strings["NavExtraction"],
         "Processing" => Strings["NavProcessing"],
+        "Sales" => Strings["NavSales"],
+        "Customers" => Strings["NavCustomers"],
         "Finance" => Strings["NavFinance"],
         "HrHse" => Strings["NavHrHse"],
         "Audit" => Strings["NavAudit"],
@@ -310,6 +312,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string ToastMessage { get => _toastMessage; set { _toastMessage = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsToastVisible)); } }
     public bool IsToastVisible => !string.IsNullOrWhiteSpace(ToastMessage);
 
+    // Sales & Spot Order Form Fields
+    public IReadOnlyList<string> CustomerTypes { get; } = new[] { "WHOLESALER", "FOOD_PROCESSOR", "GOV_TENDER", "EXPORT_BUYER" };
+    public string SaleCustomer { get; set; } = "Khorasan Food Industries (Mashhad)";
+    public string SaleSaltGrade { get; set; } = "REFINED_IODIZED_25KG";
+    private double _saleQtyMt = 30;
+    public double SaleQtyMt { get => _saleQtyMt; set { _saleQtyMt = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaleTotalPreview)); } }
+    private double _salePriceAfn = 6800;
+    public double SalePriceAfn { get => _salePriceAfn; set { _salePriceAfn = value; OnPropertyChanged(); OnPropertyChanged(nameof(SaleTotalPreview)); } }
+    public string SalePaymentMethod { get; set; } = "HAWALA";
+    public string SaleHawalaRef { get; set; } = "Saraf Aria #HW-2026-NEW";
+    public string SaleTotalPreview => FormatMoney(SaleQtyMt * SalePriceAfn);
+
+    // Customer CRM & Contract Form Fields
+    public string NewCustName { get; set; } = "";
+    public string NewCustType { get; set; } = "WHOLESALER";
+    public double NewCustCreditAfn { get; set; } = 1500000;
+    public string NewCtrCustomer { get; set; } = "Herat Central Salt Wholesalers";
+    public string NewCtrGrade { get; set; } = "REFINED_IODIZED_25KG";
+    public double NewCtrMt { get; set; } = 1000;
+    public double NewCtrPriceAfn { get; set; } = 6400;
+
     // Commands
     public ICommand SelectTabCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -331,6 +354,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand LogFleetBreakdownCommand { get; }
     public ICommand LogProcessingBatchCommand { get; }
     public ICommand RecordTransferCommand { get; }
+    public ICommand CreateSaleOrderCommand { get; }
+    public ICommand AddCustomerCommand { get; }
+    public ICommand AddContractCommand { get; }
     public ICommand PostFinancialEntryCommand { get; }
     public ICommand SettleInvoiceCommand { get; }
     public ICommand MarkRoyaltyFiledCommand { get; }
@@ -384,6 +410,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
         LogFleetBreakdownCommand = new RelayCommand(p => UpdateFleet(p as FleetAsset, true));
         LogProcessingBatchCommand = new RelayCommand(_ => LogProcessingBatch());
         RecordTransferCommand = new RelayCommand(_ => RecordTransfer());
+        CreateSaleOrderCommand = new RelayCommand(_ => CreateSaleOrder());
+        AddCustomerCommand = new RelayCommand(_ => AddCustomer());
+        AddContractCommand = new RelayCommand(_ => AddContract());
         PostFinancialEntryCommand = new RelayCommand(_ => PostFinancialEntry());
         SettleInvoiceCommand = new RelayCommand(p => SettleInvoice(p as InvoiceRecord));
         MarkRoyaltyFiledCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "FILED"));
@@ -725,6 +754,96 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void PersistAndRefresh() { _dataService.Save(_snapshot); RefreshKpis(); }
 
+    private void CreateSaleOrder()
+    {
+        if (SaleQtyMt <= 0 || SalePriceAfn <= 0) { ShowToast("Enter valid tonnage & rate."); return; }
+        var totalAfn = Math.Round(SaleQtyMt * SalePriceAfn, 0);
+        var invNo = $"INV-2026-{883 + Invoices.Count}";
+        var inv = new InvoiceRecord
+        {
+            InvoiceNumber = invNo,
+            TicketNumber = "SPOT-SALE",
+            CustomerName = SaleCustomer.Trim(),
+            QuantityMt = SaleQtyMt,
+            TotalAfn = totalAfn,
+            PaidAfn = SalePaymentMethod == "CASH" ? totalAfn : 0,
+            Status = SalePaymentMethod == "CASH" ? "PAID" : "ISSUED"
+        };
+        Invoices.Insert(0, inv);
+        _snapshot.Invoices.Insert(0, inv);
+
+        var cust = Customers.FirstOrDefault(c => c.CompanyName.Equals(SaleCustomer.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (cust is not null && inv.Status != "PAID")
+        {
+            cust.OutstandingAfn += totalAfn;
+        }
+
+        var ctr = Contracts.FirstOrDefault(c => c.CustomerName.Equals(SaleCustomer.Trim(), StringComparison.OrdinalIgnoreCase) && c.SaltGrade == SaleSaltGrade);
+        if (ctr is not null)
+        {
+            ctr.DeliveredMt = Math.Round(ctr.DeliveredMt + SaleQtyMt, 1);
+        }
+
+        if (SalePaymentMethod == "CASH")
+        {
+            var fin = new FinancialEntry
+            {
+                EntryType = "RECEIVABLE_PAYMENT",
+                Counterparty = SaleCustomer.Trim(),
+                Currency = "AFN",
+                Amount = totalAfn,
+                LockedUsdToAfn = UsdToAfn,
+                Method = "CASH",
+                Reference = invNo
+            };
+            FinancialLedger.Insert(0, fin);
+            _snapshot.FinancialLedger.Insert(0, fin);
+        }
+
+        AddAudit("sales_orders", invNo, "INSERT", $"Sold {SaleQtyMt} MT ({SaleSaltGrade}) to {SaleCustomer} — {FormatMoney(totalAfn)} ({SalePaymentMethod})");
+        PersistAndRefresh();
+        ShowToast($"Sale {invNo} created ({FormatMoney(totalAfn)})");
+    }
+
+    private void AddCustomer()
+    {
+        if (string.IsNullOrWhiteSpace(NewCustName)) { ShowToast("Enter customer company name."); return; }
+        var cust = new CustomerAccount
+        {
+            Code = $"CUS-HRT-{15 + Customers.Count:D3}",
+            CompanyName = NewCustName.Trim(),
+            CustomerType = NewCustType,
+            CreditLimitAfn = NewCustCreditAfn,
+            OutstandingAfn = 0
+        };
+        Customers.Insert(0, cust);
+        _snapshot.Customers.Insert(0, cust);
+        AddAudit("customers", cust.Code, "INSERT", $"Added customer {cust.CompanyName} ({cust.CustomerType})");
+        NewCustName = "";
+        OnPropertyChanged(nameof(NewCustName));
+        PersistAndRefresh();
+        ShowToast($"Added customer {cust.CompanyName}");
+    }
+
+    private void AddContract()
+    {
+        if (NewCtrMt <= 0 || NewCtrPriceAfn <= 0) return;
+        var ctr = new TonnageContract
+        {
+            ContractCode = $"CTR-2026-{10 + Contracts.Count:D2}",
+            CustomerName = NewCtrCustomer.Trim(),
+            SaltGrade = NewCtrGrade,
+            ContractedMt = NewCtrMt,
+            DeliveredMt = 0,
+            TierPriceAfnPerMt = NewCtrPriceAfn
+        };
+        Contracts.Insert(0, ctr);
+        _snapshot.Contracts.Insert(0, ctr);
+        AddAudit("contracts", ctr.ContractCode, "INSERT", $"Signed {ctr.ContractedMt} MT contract with {ctr.CustomerName}");
+        PersistAndRefresh();
+        ShowToast($"Created contract {ctr.ContractCode}");
+    }
+
     private void RefreshKpis()
     {
         OnPropertyChanged(nameof(KpiExtractedText));
@@ -733,6 +852,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(KpiRevenueText));
         OnPropertyChanged(nameof(KpiRoyaltyText));
         OnPropertyChanged(nameof(KpiFuelText));
+        OnPropertyChanged(nameof(SaleTotalPreview));
         OnPropertyChanged(nameof(PendingSyncCount));
         OnPropertyChanged(nameof(PendingSyncLabel));
         OnPropertyChanged(nameof(HasPendingSync));
