@@ -103,6 +103,7 @@ public sealed class ErpDataService
                     if (loaded.QcLabTests.Count == 0) loaded.QcLabTests = BuildSeedSnapshot().QcLabTests;
                     if (loaded.ExportShipments.Count == 0) loaded.ExportShipments = BuildSeedSnapshot().ExportShipments;
                     if (loaded.ConsumableItems.Count == 0) loaded.ConsumableItems = BuildSeedSnapshot().ConsumableItems;
+                    if (loaded.MineExpenses.Count == 0) loaded.MineExpenses = BuildSeedSnapshot().MineExpenses;
                     return loaded;
                 }
             }
@@ -373,6 +374,13 @@ public sealed class ErpDataService
             new() { SkuCode = "STR-KIO-003", ItemName = "Potassium Iodate (KIO3) Food-Grade", Category = "POTASSIUM_IODATE", Unit = "kg", StockQty = 38, ReorderLevel = 50, UnitCostAfn = 4200 },
             new() { SkuCode = "STR-EXP-009", ItemName = "ANFO Blasting Compound (MoI Custody)", Category = "EXPLOSIVES", Unit = "kg", StockQty = 620, ReorderLevel = 400, UnitCostAfn = 210 },
             new() { SkuCode = "STR-PRT-336", ItemName = "CAT 336D Hydraulic Filter & Seals Kit", Category = "SPARE_PARTS", Unit = "Kits", StockQty = 2, ReorderLevel = 3, UnitCostAfn = 18500 }
+        },
+        MineExpenses = new()
+        {
+            new() { ExpenseCode = "EXP-OP-0412", Date = "2026-11-18 08:15", Category = "CREW_FOOD_CAMP", Description = "Daily Ghoryan pit crew kitchen & camp rations (45 workers)", Payee = "Haji Noor Ahmad Catering", AmountAfn = 18500, PaymentAccountCode = "1000", ReceiptRef = "RCP-8812", RecordedBy = "Site Ops Manager" },
+            new() { ExpenseCode = "EXP-OP-0411", Date = "2026-11-17 16:40", Category = "EQUIPMENT_REPAIR", Description = "Emergency hydraulic hose replacement on Komatsu WA470", Payee = "Herat Heavy Hydraulics", AmountAfn = 32400, PaymentAccountCode = "1000", ReceiptRef = "RCP-8794", RecordedBy = "Finance Officer" },
+            new() { ExpenseCode = "EXP-OP-0410", Date = "2026-11-17 11:20", Category = "DIESEL_GENERATOR", Description = "Camp & Iodization Plant 150kVA generator diesel refill", Payee = "Ghoryan Fuel Station", AmountAfn = 24000, PaymentAccountCode = "1000", ReceiptRef = "RCP-8788", RecordedBy = "Site Ops Manager" },
+            new() { ExpenseCode = "EXP-OP-0409", Date = "2026-11-16 14:05", Category = "ROAD_TOLL_CUSTOMS", Description = "Herat–Islam Qala highway weigh-station & municipal tolls", Payee = "Herat Transport Union", AmountAfn = 9500, PaymentAccountCode = "1020", ReceiptRef = "HW-TOLL-19", RecordedBy = "Finance Officer" }
         },
         AuditLogs = new()
         {

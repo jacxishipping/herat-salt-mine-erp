@@ -72,6 +72,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<QcLabTest> QcLabTests { get; }
     public ObservableCollection<ExportShipment> ExportShipments { get; }
     public ObservableCollection<ConsumableItem> ConsumableItems { get; }
+    public ObservableCollection<MineExpense> MineExpenses { get; }
     public ObservableCollection<AuditLogEntry> AuditLogs { get; }
 
     // Reference Lists
@@ -210,6 +211,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         "Exports" => Strings["NavExports"],
         "Finance" => Strings["NavFinance"],
         "Accounting" => Strings["NavAccounting"],
+        "Expenses" => Strings["NavExpenses"],
         "Suppliers" => Strings["NavSuppliers"],
         "Reports" => Strings["NavReports"],
         "HrHse" => Strings["NavHrHse"],
@@ -506,6 +508,36 @@ public sealed class MainViewModel : INotifyPropertyChanged
             .OrderByDescending(r => r.RevenueAfn)
             .ToList();
 
+    // Daily Mine Expenses & Petty Cash Fields
+    public IReadOnlyList<string> ExpenseCategories { get; } = new[]
+    {
+        "CREW_FOOD_CAMP", "DIESEL_GENERATOR", "EQUIPMENT_REPAIR", "ROAD_TOLL_CUSTOMS", "SITE_SECURITY", "OFFICE_UTILITIES", "OTHER_OPEX"
+    };
+    public IReadOnlyList<string> ExpensePayAccounts { get; } = new[] { "1000", "1010", "1020" };
+    public string NewExpCategory { get; set; } = "CREW_FOOD_CAMP";
+    public string NewExpDescription { get; set; } = "Daily pit crew rations & camp supplies";
+    public string NewExpPayee { get; set; } = "Ghoryan Site Market";
+    public double NewExpAmountAfn { get; set; } = 12500;
+    public string NewExpPayAccount { get; set; } = "1000";
+    public string NewExpReceiptRef { get; set; } = "RCP-2026-NEW";
+    public string TotalMineExpensesText => FormatMoney(MineExpenses.Sum(e => e.AmountAfn));
+    public string CashDeskExpensesText => FormatMoney(MineExpenses.Where(e => e.PaymentAccountCode == "1000").Sum(e => e.AmountAfn));
+    public string RepairFuelExpensesText => FormatMoney(MineExpenses.Where(e => e.Category is "DIESEL_GENERATOR" or "EQUIPMENT_REPAIR").Sum(e => e.AmountAfn));
+
+    // Labors & Salaries (Payroll) Management Fields
+    public IReadOnlyList<string> LaborSiteZones { get; } = new[] { "GHR-PIT-01", "GHR-TUN-02", "KHS-PAN-03", "PROCESSING-PLANT", "KANTA-GATE" };
+    public string NewLaborName { get; set; } = "";
+    public string NewLaborTazkira { get; set; } = "1401-0412-55810";
+    public string NewLaborRole { get; set; } = "Salt Pit Laborer";
+    public string NewLaborZone { get; set; } = "GHR-PIT-01";
+    public double NewLaborDailyWage { get; set; } = 600;
+    public int NewLaborDays { get; set; } = 26;
+    public double NewLaborBonus { get; set; } = 1500;
+    public string TotalLaborsCountText => $"{PayrollRecords.Count} Active Workers";
+    public string TotalPayrollDueText => FormatMoney(PayrollRecords.Sum(p => p.NetPayableAfn));
+    public string TotalPayrollPaidText => FormatMoney(PayrollRecords.Where(p => p.SalaryStatus == "PAID").Sum(p => p.NetPayableAfn));
+    public string TotalPayrollUnpaidText => FormatMoney(PayrollRecords.Where(p => p.SalaryStatus != "PAID").Sum(p => p.NetPayableAfn));
+
     // Commands
     public ICommand SelectTabCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -535,10 +567,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand PostFinancialEntryCommand { get; }
     public ICommand PostManualJournalCommand { get; }
     public ICommand PrintBalanceSheetCommand { get; }
+    public ICommand RecordMineExpenseCommand { get; }
     public ICommand SettleInvoiceCommand { get; }
     public ICommand MarkRoyaltyFiledCommand { get; }
     public ICommand MarkRoyaltyPaidCommand { get; }
     public ICommand LogAttendanceCommand { get; }
+    public ICommand AddLaborerCommand { get; }
+    public ICommand GiveLaborAdvanceCommand { get; }
+    public ICommand PayWorkerSalaryCommand { get; }
+    public ICommand PayAllSalariesCommand { get; }
     public ICommand PrintPayslipCommand { get; }
     public ICommand LogHseIncidentCommand { get; }
     public ICommand IssuePpeKitCommand { get; }
@@ -596,6 +633,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         QcLabTests = new(_snapshot.QcLabTests);
         ExportShipments = new(_snapshot.ExportShipments);
         ConsumableItems = new(_snapshot.ConsumableItems);
+        MineExpenses = new(_snapshot.MineExpenses);
         AuditLogs = new(_snapshot.AuditLogs);
         ApplyTicketFilter();
         ApplyJournalFilter();
@@ -628,10 +666,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         PostFinancialEntryCommand = new RelayCommand(_ => PostFinancialEntry());
         PostManualJournalCommand = new RelayCommand(_ => PostManualJournal());
         PrintBalanceSheetCommand = new RelayCommand(_ => PrintBalanceSheet());
+        RecordMineExpenseCommand = new RelayCommand(_ => RecordMineExpense());
         SettleInvoiceCommand = new RelayCommand(p => SettleInvoice(p as InvoiceRecord));
         MarkRoyaltyFiledCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "FILED"));
         MarkRoyaltyPaidCommand = new RelayCommand(p => UpdateRoyalty(p as MompRoyalty, "PAID"));
         LogAttendanceCommand = new RelayCommand(_ => LogBiometricAttendance());
+        AddLaborerCommand = new RelayCommand(_ => AddLaborer());
+        GiveLaborAdvanceCommand = new RelayCommand(p => GiveLaborAdvance(p as EmployeePayroll));
+        PayWorkerSalaryCommand = new RelayCommand(p => PayWorkerSalary(p as EmployeePayroll));
+        PayAllSalariesCommand = new RelayCommand(_ => PayAllSalaries());
         PrintPayslipCommand = new RelayCommand(p => PrintWorkerPayslip(p as EmployeePayroll));
         LogHseIncidentCommand = new RelayCommand(_ => LogHseIncident());
         IssuePpeKitCommand = new RelayCommand(_ => IssuePpeKit());
@@ -1479,6 +1522,150 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ShowToast("Printed Executive Management Report");
     }
 
+    private void RecordMineExpense()
+    {
+        if (!CanViewFinancials || NewExpAmountAfn <= 0) { ShowToast("Owner/Finance role & valid amount required."); return; }
+        var exp = new MineExpense
+        {
+            ExpenseCode = $"EXP-OP-{413 + MineExpenses.Count:D4}",
+            Date = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            Category = NewExpCategory,
+            Description = string.IsNullOrWhiteSpace(NewExpDescription) ? NewExpCategory : NewExpDescription.Trim(),
+            Payee = string.IsNullOrWhiteSpace(NewExpPayee) ? "Site Vendor" : NewExpPayee.Trim(),
+            AmountAfn = Math.Round(NewExpAmountAfn, 0),
+            PaymentAccountCode = NewExpPayAccount,
+            ReceiptRef = string.IsNullOrWhiteSpace(NewExpReceiptRef) ? "-" : NewExpReceiptRef.Trim(),
+            RecordedBy = ActiveRole.ToString()
+        };
+        MineExpenses.Insert(0, exp);
+        _snapshot.MineExpenses.Insert(0, exp);
+
+        string debitGl = exp.Category switch
+        {
+            "ROAD_TOLL_CUSTOMS" => "5200",
+            "OFFICE_UTILITIES" or "OTHER_OPEX" => "5100",
+            _ => "5000"
+        };
+        PostDoubleEntry(debitGl, exp.PaymentAccountCode, exp.AmountAfn, $"Mine Expense {exp.ExpenseCode} ({exp.Category}): {exp.Description}");
+
+        var fin = new FinancialEntry
+        {
+            EntryType = "MINE_EXPENSE",
+            Counterparty = exp.Payee,
+            Currency = "AFN",
+            Amount = exp.AmountAfn,
+            LockedUsdToAfn = UsdToAfn,
+            Method = exp.PaymentAccountCode == "1000" ? "CASH" : exp.PaymentAccountCode == "1010" ? "BANK_TRANSFER" : "HAWALA",
+            Reference = $"{exp.ExpenseCode} / {exp.ReceiptRef}"
+        };
+        FinancialLedger.Insert(0, fin);
+        _snapshot.FinancialLedger.Insert(0, fin);
+        AddAudit("mine_expenses", exp.ExpenseCode, "INSERT", $"Recorded {exp.AmountAfn:N0} AFN ({exp.Category}) to {exp.Payee}");
+        PersistAndRefresh();
+        ShowToast($"Recorded expense {exp.ExpenseCode} ({FormatMoney(exp.AmountAfn)})");
+    }
+
+    private void AddLaborer()
+    {
+        if (string.IsNullOrWhiteSpace(NewLaborName) || NewLaborDailyWage <= 0) { ShowToast("Enter worker name & daily wage."); return; }
+        var emp = new EmployeePayroll
+        {
+            EmployeeCode = $"EMP-GHR-{30 + PayrollRecords.Count:D3}",
+            FullName = NewLaborName.Trim(),
+            TazkiraNo = string.IsNullOrWhiteSpace(NewLaborTazkira) ? "-" : NewLaborTazkira.Trim(),
+            RoleTitle = string.IsNullOrWhiteSpace(NewLaborRole) ? "Pit Laborer" : NewLaborRole.Trim(),
+            SiteZone = NewLaborZone,
+            DaysWorked = Math.Max(1, NewLaborDays),
+            DailyWageAfn = NewLaborDailyWage,
+            TonBonusAfn = Math.Max(0, NewLaborBonus),
+            AdvancesDeductionAfn = 0,
+            SalaryStatus = "UNPAID",
+            LastPaidDate = "-"
+        };
+        PayrollRecords.Insert(0, emp);
+        _snapshot.PayrollRecords.Insert(0, emp);
+        NewLaborName = "";
+        OnPropertyChanged(nameof(NewLaborName));
+        AddAudit("payroll_labors", emp.EmployeeCode, "INSERT", $"Registered laborer {emp.FullName} ({emp.RoleTitle}, {emp.DailyWageAfn:N0} AFN/day)");
+        PersistAndRefresh();
+        ShowToast($"Added laborer {emp.FullName} ({emp.EmployeeCode})");
+    }
+
+    private void GiveLaborAdvance(EmployeePayroll? emp)
+    {
+        if (emp is null || !CanViewFinancials) { ShowToast("Owner/Finance role required for salary advances."); return; }
+        const double advAfn = 2000;
+        emp.AdvancesDeductionAfn += advAfn;
+        PostDoubleEntry("2200", "1000", advAfn, $"Salary advance (2,000 AFN) to {emp.FullName} ({emp.EmployeeCode})");
+        AddAudit("payroll_advances", emp.EmployeeCode, "ADVANCE", $"Issued 2,000 AFN salary advance to {emp.FullName}");
+        System.Windows.Data.CollectionViewSource.GetDefaultView(PayrollRecords)?.Refresh();
+        PersistAndRefresh();
+        ShowToast($"Issued 2,000 AFN advance to {emp.FullName}");
+    }
+
+    private void PayWorkerSalary(EmployeePayroll? emp)
+    {
+        if (emp is null || !CanViewFinancials || emp.SalaryStatus == "PAID") return;
+        double net = emp.NetPayableAfn;
+        emp.SalaryStatus = "PAID";
+        emp.LastPaidDate = DateTime.Now.ToString("yyyy-MM-dd");
+        if (net > 0)
+        {
+            PostDoubleEntry("5000", "1000", net, $"Monthly salary paid to {emp.FullName} ({emp.EmployeeCode}, {emp.DaysWorked} days)");
+            var fin = new FinancialEntry
+            {
+                EntryType = "PAYROLL_SALARY",
+                Counterparty = emp.FullName,
+                Currency = "AFN",
+                Amount = net,
+                LockedUsdToAfn = UsdToAfn,
+                Method = "CASH",
+                Reference = $"SAL-{emp.EmployeeCode}-{DateTime.Now:MMdd}"
+            };
+            FinancialLedger.Insert(0, fin);
+            _snapshot.FinancialLedger.Insert(0, fin);
+        }
+        AddAudit("payroll_salaries", emp.EmployeeCode, "SALARY_PAID", $"Paid {net:N0} AFN salary to {emp.FullName}");
+        System.Windows.Data.CollectionViewSource.GetDefaultView(PayrollRecords)?.Refresh();
+        PersistAndRefresh();
+        ShowToast($"Paid salary {FormatMoney(net)} to {emp.FullName}");
+    }
+
+    private void PayAllSalaries()
+    {
+        if (!CanViewFinancials) { ShowToast("Owner or Finance Officer role required."); return; }
+        var unpaid = PayrollRecords.Where(p => p.SalaryStatus != "PAID").ToList();
+        if (unpaid.Count == 0) { ShowToast("All worker salaries are already paid."); return; }
+        double totalPaid = 0;
+        foreach (var emp in unpaid)
+        {
+            double net = emp.NetPayableAfn;
+            emp.SalaryStatus = "PAID";
+            emp.LastPaidDate = DateTime.Now.ToString("yyyy-MM-dd");
+            totalPaid += net;
+        }
+        if (totalPaid > 0)
+        {
+            PostDoubleEntry("5000", "1000", totalPaid, $"Bulk monthly payroll run ({unpaid.Count} mine workers)");
+            var fin = new FinancialEntry
+            {
+                EntryType = "PAYROLL_SALARY",
+                Counterparty = $"Mine Workforce ({unpaid.Count} workers)",
+                Currency = "AFN",
+                Amount = totalPaid,
+                LockedUsdToAfn = UsdToAfn,
+                Method = "CASH",
+                Reference = $"PAYROLL-{DateTime.Now:yyyy-MM}"
+            };
+            FinancialLedger.Insert(0, fin);
+            _snapshot.FinancialLedger.Insert(0, fin);
+        }
+        AddAudit("payroll_salaries", $"PAYROLL-{DateTime.Now:yyyy-MM}", "BULK_PAY", $"Paid {unpaid.Count} workers totaling {totalPaid:N0} AFN");
+        System.Windows.Data.CollectionViewSource.GetDefaultView(PayrollRecords)?.Refresh();
+        PersistAndRefresh();
+        ShowToast($"Paid {unpaid.Count} salaries ({FormatMoney(totalPaid)})");
+    }
+
     private void RefreshKpis()
     {
         OnPropertyChanged(nameof(KpiExtractedText));
@@ -1505,6 +1692,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(TotalApUnpaidText));
         OnPropertyChanged(nameof(TotalExportTonnageText));
         OnPropertyChanged(nameof(GradeProfitability));
+        OnPropertyChanged(nameof(TotalMineExpensesText));
+        OnPropertyChanged(nameof(CashDeskExpensesText));
+        OnPropertyChanged(nameof(RepairFuelExpensesText));
+        OnPropertyChanged(nameof(TotalLaborsCountText));
+        OnPropertyChanged(nameof(TotalPayrollDueText));
+        OnPropertyChanged(nameof(TotalPayrollPaidText));
+        OnPropertyChanged(nameof(TotalPayrollUnpaidText));
         OnPropertyChanged(nameof(PendingSyncCount));
         OnPropertyChanged(nameof(PendingSyncLabel));
         OnPropertyChanged(nameof(HasPendingSync));

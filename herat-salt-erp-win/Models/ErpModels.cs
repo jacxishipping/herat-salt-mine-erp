@@ -186,11 +186,14 @@ public sealed class EmployeePayroll
     public string FullName { get; set; } = "";
     public string TazkiraNo { get; set; } = "";
     public string RoleTitle { get; set; } = "";
+    public string SiteZone { get; set; } = "GHR-PIT-01";
     public int DaysWorked { get; set; }
     public double DailyWageAfn { get; set; }
     public double TonBonusAfn { get; set; }
     public double AdvancesDeductionAfn { get; set; }
-    public double NetPayableAfn => (DaysWorked * DailyWageAfn) + TonBonusAfn - AdvancesDeductionAfn;
+    public double NetPayableAfn => Math.Max(0, (DaysWorked * DailyWageAfn) + TonBonusAfn - AdvancesDeductionAfn);
+    public string SalaryStatus { get; set; } = "UNPAID"; // UNPAID, PAID
+    public string LastPaidDate { get; set; } = "-";
 }
 
 public sealed class AttendanceRecord
@@ -344,6 +347,19 @@ public sealed class GradeProfitRow
     public double MarginPct => RevenueAfn > 0 ? Math.Round((EstProfitAfn / RevenueAfn) * 100.0, 1) : 0;
 }
 
+public sealed class MineExpense
+{
+    public string ExpenseCode { get; set; } = "";
+    public string Date { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+    public string Category { get; set; } = "CREW_FOOD_CAMP";
+    public string Description { get; set; } = "";
+    public string Payee { get; set; } = "";
+    public double AmountAfn { get; set; }
+    public string PaymentAccountCode { get; set; } = "1000"; // 1000 Cash, 1010 Bank, 1020 Hawala
+    public string ReceiptRef { get; set; } = "";
+    public string RecordedBy { get; set; } = "";
+}
+
 public sealed class ErpLocalSnapshot
 {
     public double UsdToAfn { get; set; } = 71.50;
@@ -371,5 +387,6 @@ public sealed class ErpLocalSnapshot
     public List<QcLabTest> QcLabTests { get; set; } = new();
     public List<ExportShipment> ExportShipments { get; set; } = new();
     public List<ConsumableItem> ConsumableItems { get; set; } = new();
+    public List<MineExpense> MineExpenses { get; set; } = new();
     public List<AuditLogEntry> AuditLogs { get; set; } = new();
 }

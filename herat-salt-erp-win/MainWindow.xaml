@@ -96,6 +96,8 @@
                             <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                          Content="{Binding Strings[NavAccounting]}" Command="{Binding SelectTabCommand}" CommandParameter="Accounting" />
                             <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                                         Content="{Binding Strings[NavExpenses]}" Command="{Binding SelectTabCommand}" CommandParameter="Expenses" />
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                          Content="{Binding Strings[NavSuppliers]}" Command="{Binding SelectTabCommand}" CommandParameter="Suppliers" />
                             <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
                                          Content="{Binding Strings[NavReports]}" Command="{Binding SelectTabCommand}" CommandParameter="Reports" />
@@ -919,19 +921,112 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- 6. HR, BIOMETRIC ATTENDANCE, PPE & HSE -->
+                    <!-- 6. LABORS, MONTHLY SALARIES, BIOMETRIC ATTENDANCE & HSE -->
                     <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=HrHse}">
                         <Grid Margin="0,0,0,14">
                             <StackPanel>
                                 <TextBlock Text="{Binding Strings[NavHrHse]}" Style="{StaticResource PageTitleStyle}" />
-                                <TextBlock Text="AFN payroll, biometric/RFID shift check-in (offline-ready), PPE issuance &amp; HSE dust checks."
+                                <TextBlock Text="Register mine laborers, manage daily wages &amp; advances, pay monthly AFN salaries (auto-posted to GL), biometric attendance &amp; HSE."
                                            Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Button Content="Pay All Unpaid Salaries" Command="{Binding PayAllSalariesCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
                                 <Button Content="+ Biometric Check-In" Command="{Binding LogAttendanceCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
-                                <Button Content="+ Issue PPE Kit" Command="{Binding IssuePpeKitCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                <Button Content="+ Issue PPE Kit" Command="{Binding IssuePpeKitCommand}" Style="{StaticResource SecondaryButtonStyle}" />
                             </StackPanel>
                         </Grid>
+
+                        <!-- Labors & Salaries KPI Strip -->
+                        <UniformGrid Columns="4" Margin="0,0,0,14">
+                            <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                <StackPanel>
+                                    <TextBlock Text="Active Mine Workforce" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                    <TextBlock Text="{Binding TotalLaborsCountText}" Style="{StaticResource MonoTextStyle}" FontSize="16" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                <StackPanel>
+                                    <TextBlock Text="Total Monthly Payroll" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                    <TextBlock Text="{Binding TotalPayrollDueText}" Style="{StaticResource MonoTextStyle}" FontSize="16" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                <StackPanel>
+                                    <TextBlock Text="Paid This Cycle" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                    <TextBlock Text="{Binding TotalPayrollPaidText}" Style="{StaticResource MonoTextStyle}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource SurfaceCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Unpaid Salary Balance" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                    <TextBlock Text="{Binding TotalPayrollUnpaidText}" Style="{StaticResource MonoTextStyle}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <!-- Register New Laborer / Worker Form -->
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="REGISTER / HIRE MINE LABORER &amp; SET DAILY WAGE (AFN)" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="7">
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Worker Full Name" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewLaborName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Tazkira ID" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewLaborTazkira, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Role / Trade" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewLaborRole, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Site Zone" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding LaborSiteZones}" SelectedItem="{Binding NewLaborZone}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Daily Wage (AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewLaborDailyWage, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Days / Bonus" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewLaborDays, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <Button Content="+ Add Laborer" Command="{Binding AddLaborerCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Labors & Monthly Salaries Table -->
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="0" Margin="0,0,0,14">
+                            <DataGrid ItemsSource="{Binding PayrollRecords}" Style="{StaticResource SaaSDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Code" Binding="{Binding EmployeeCode}" Width="95" />
+                                    <DataGridTextColumn Header="Laborer / Staff" Binding="{Binding FullName}" Width="*" />
+                                    <DataGridTextColumn Header="Role" Binding="{Binding RoleTitle}" Width="145" />
+                                    <DataGridTextColumn Header="Days" Binding="{Binding DaysWorked}" Width="48" />
+                                    <DataGridTextColumn Header="Wage/Day" Binding="{Binding DailyWageAfn, StringFormat=N0}" Width="75" />
+                                    <DataGridTextColumn Header="Advances" Binding="{Binding AdvancesDeductionAfn, StringFormat=N0}" Width="75" />
+                                    <DataGridTextColumn Header="Net Payable" Binding="{Binding NetPayableAfn, StringFormat=N0}" Width="90" />
+                                    <DataGridTextColumn Header="Status" Binding="{Binding SalaryStatus}" Width="70" />
+                                    <DataGridTemplateColumn Header="Salary Actions" Width="235">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="+2k Adv" Style="{StaticResource SecondaryButtonStyle}" Padding="6,3" Margin="0,0,4,0"
+                                                            Command="{Binding DataContext.GiveLaborAdvanceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                    <Button Content="Pay Salary" Style="{StaticResource PrimaryButtonStyle}" Padding="6,3" Margin="0,0,4,0"
+                                                            Command="{Binding DataContext.PayWorkerSalaryCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                    <Button Content="Payslip" Style="{StaticResource SecondaryButtonStyle}" Padding="6,3"
+                                                            Command="{Binding DataContext.PrintPayslipCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
 
                         <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
                             <UniformGrid Columns="5">
@@ -941,26 +1036,6 @@
                                 <TextBox Text="{Binding HseDesc, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,6,0" />
                                 <Button Content="Log HSE Report" Command="{Binding LogHseIncidentCommand}" Style="{StaticResource PrimaryButtonStyle}" />
                             </UniformGrid>
-                        </Border>
-
-                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="0" Margin="0,0,0,14">
-                            <DataGrid ItemsSource="{Binding PayrollRecords}" Style="{StaticResource SaaSDataGridStyle}">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Code" Binding="{Binding EmployeeCode}" Width="110" />
-                                    <DataGridTextColumn Header="Employee" Binding="{Binding FullName}" Width="*" />
-                                    <DataGridTextColumn Header="Position" Binding="{Binding RoleTitle}" Width="180" />
-                                    <DataGridTextColumn Header="Days" Binding="{Binding DaysWorked}" Width="60" />
-                                    <DataGridTextColumn Header="Net Payable (AFN)" Binding="{Binding NetPayableAfn, StringFormat=N0}" Width="125" />
-                                    <DataGridTemplateColumn Header="Payslip" Width="115">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Button Content="Print Payslip" Style="{StaticResource SecondaryButtonStyle}" Padding="7,3"
-                                                        Command="{Binding DataContext.PrintPayslipCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
                         </Border>
 
                         <Border Style="{StaticResource SurfaceCardStyle}" Padding="0" Margin="0,0,0,14">
@@ -1495,6 +1570,88 @@
                                     </StackPanel>
                                 </Border>
                             </Grid>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 15. DAILY MINE EXPENSES & PETTY CASH -->
+                    <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource TabVis}, ConverterParameter=Expenses}">
+                        <Border Style="{StaticResource SurfaceCardStyle}" Padding="32"
+                                Visibility="{Binding CannotViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Access Restricted: Only Mine Owner or Finance Officer can record &amp; review daily mine expenses."
+                                       HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <StackPanel Visibility="{Binding CanViewFinancials, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding Strings[NavExpenses]}" Style="{StaticResource PageTitleStyle}" />
+                            <TextBlock Text="Track Ghoryan/Kuhsan daily site expenses (crew food/camp, generator diesel, fleet repairs, road tolls) — auto-posted to General Ledger."
+                                       Style="{StaticResource SubtitleStyle}" Margin="0,4,0,14" />
+
+                            <UniformGrid Columns="3" Margin="0,0,0,14">
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Daily Mine Expenses" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding TotalMineExpensesText}" Style="{StaticResource MonoTextStyle}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Paid from Herat Cash Desk (1000)" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding CashDeskExpensesText}" Style="{StaticResource MonoTextStyle}" FontSize="18" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource SurfaceCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Generator Diesel &amp; Equipment Repairs" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock Text="{Binding RepairFuelExpensesText}" Style="{StaticResource MonoTextStyle}" FontSize="18" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+
+                            <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="RECORD DAILY SITE EXPENSE (AUTO-POSTS DR EXPENSE / CR CASH OR BANK)" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
+                                    <UniformGrid Columns="7">
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Category" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <ComboBox ItemsSource="{Binding ExpenseCategories}" SelectedItem="{Binding NewExpCategory}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Description" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding NewExpDescription, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Payee / Vendor" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding NewExpPayee, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Amount (AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding NewExpAmountAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Pay From (GL)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <ComboBox ItemsSource="{Binding ExpensePayAccounts}" SelectedItem="{Binding NewExpPayAccount}" Style="{StaticResource SaaSComboBoxStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,6,0">
+                                            <TextBlock Text="Receipt #" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding NewExpReceiptRef, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                        </StackPanel>
+                                        <Button Content="+ Record Expense" Command="{Binding RecordMineExpenseCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
+                                    </UniformGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource SurfaceCardStyle}" Padding="0">
+                                <DataGrid ItemsSource="{Binding MineExpenses}" Style="{StaticResource SaaSDataGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Exp #" Binding="{Binding ExpenseCode}" Width="110" />
+                                        <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="120" />
+                                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="135" />
+                                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*" />
+                                        <DataGridTextColumn Header="Payee" Binding="{Binding Payee}" Width="150" />
+                                        <DataGridTextColumn Header="GL Acct" Binding="{Binding PaymentAccountCode}" Width="65" />
+                                        <DataGridTextColumn Header="Amount (AFN)" Binding="{Binding AmountAfn, StringFormat=N0}" Width="105" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
                         </StackPanel>
                     </StackPanel>
 
