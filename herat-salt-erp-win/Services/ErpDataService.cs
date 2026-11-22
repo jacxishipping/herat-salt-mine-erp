@@ -220,6 +220,16 @@ public sealed class ErpDataService
             sb.AppendLine($"SUPPLIER_AP,\"{b.BillNumber}\",\"{b.SupplierName}\",{b.AmountAfn:F2},AFN,{b.Status}");
         foreach (var r in snapshot.MompRoyalties)
             sb.AppendLine($"MOMP_ROYALTY,\"{r.CustomsBorderRef}\",\"{r.PeriodLabel}\",{r.TotalRoyaltyAfn:F2},AFN,{r.Status}");
+        foreach (var j in snapshot.JournalEntries)
+            sb.AppendLine($"GL_JOURNAL,\"{j.EntryNumber}\",\"DR {j.DebitAccountCode} / CR {j.CreditAccountCode}\",{j.AmountAfn:F2},AFN,\"{j.Memo}\"");
+        foreach (var e in snapshot.MineExpenses)
+            sb.AppendLine($"MINE_EXPENSE,\"{e.ExpenseCode}\",\"{e.Payee} ({e.Category})\",{e.AmountAfn:F2},AFN,GL-{e.PaymentAccountCode}");
+        foreach (var p in snapshot.PayrollRecords)
+            sb.AppendLine($"PAYROLL,\"{p.EmployeeCode}\",\"{p.FullName} ({p.RoleTitle})\",{p.NetPayableAfn:F2},AFN,{p.SalaryStatus}");
+        foreach (var q in snapshot.QcLabTests)
+            sb.AppendLine($"QC_LAB_COA,\"{q.TestCode}\",\"{q.BatchCode} ({q.SaltGrade})\",{q.NaClPurityPct:F1},NaCl%,{q.Status}");
+        foreach (var x in snapshot.ExportShipments)
+            sb.AppendLine($"EXPORT_CUSTOMS,\"{x.CustomsDeclNo}\",\"{x.BuyerName} ({x.BorderPost})\",{x.TonnageMt:F1},MT,{x.Status}");
         File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
         return path;
     }

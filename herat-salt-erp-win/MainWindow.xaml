@@ -215,7 +215,7 @@
                                 </TextBlock>
                                 <TextBlock FontFamily="Cascadia Mono, Consolas" FontSize="12" Foreground="#CBD5E1" Margin="0,4,0,0">
                                     <Run Text="[DPAPI-VAULT]" Foreground="#64748B" /><Run Text=" [SEALED] " Foreground="#6366F1" />
-                                    <Run Text="Offline store persisted in %LocalAppData%\HeratSaltErp\erp_offline_store.json." />
+                                    <Run Text="Offline store persisted in %LocalAppData%\HeratSaltErp\herat_salt_erp.db (ACID SQLite WAL)." />
                                 </TextBlock>
                             </StackPanel>
                         </Border>
@@ -968,7 +968,7 @@
                         <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
                             <StackPanel>
                                 <TextBlock Text="REGISTER / HIRE MINE LABORER &amp; SET DAILY WAGE (AFN)" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
-                                <UniformGrid Columns="7">
+                                <UniformGrid Columns="8">
                                     <StackPanel Margin="0,0,6,0">
                                         <TextBlock Text="Worker Full Name" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
                                         <TextBox Text="{Binding NewLaborName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
@@ -986,12 +986,16 @@
                                         <ComboBox ItemsSource="{Binding LaborSiteZones}" SelectedItem="{Binding NewLaborZone}" Style="{StaticResource SaaSComboBoxStyle}" />
                                     </StackPanel>
                                     <StackPanel Margin="0,0,6,0">
-                                        <TextBlock Text="Daily Wage (AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBlock Text="Daily Wage" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
                                         <TextBox Text="{Binding NewLaborDailyWage, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
                                     </StackPanel>
                                     <StackPanel Margin="0,0,6,0">
-                                        <TextBlock Text="Days / Bonus" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBlock Text="Days Worked" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
                                         <TextBox Text="{Binding NewLaborDays, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="Bonus (AFN)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding NewLaborBonus, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
                                     </StackPanel>
                                     <Button Content="+ Add Laborer" Command="{Binding AddLaborerCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" />
                                 </UniformGrid>

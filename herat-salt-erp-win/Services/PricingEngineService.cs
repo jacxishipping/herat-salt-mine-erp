@@ -67,17 +67,19 @@ public static class PricingEngineService
         double quantityMt,
         double targetMarginPct,
         double usdToAfn,
-        IEnumerable<TonnageContract> activeContracts)
+        IEnumerable<TonnageContract> activeContracts,
+        double mompRoyaltyPerMt = MompRoyaltyPerMtAfn)
     {
         var profile = GradeProfiles.TryGetValue(saltGrade, out var p)
             ? p
             : GradeProfiles["REFINED_IODIZED_25KG"];
         var freight = DestinationFreightAfnPerMt.TryGetValue(destination, out var f) ? f : 450;
+        double royaltyRate = mompRoyaltyPerMt > 0 ? mompRoyaltyPerMt : MompRoyaltyPerMtAfn;
 
         double landedCost = profile.ExtractionAfnPerMt
             + profile.ProcessingIodineAfnPerMt
             + profile.PackagingBagsAfnPerMt
-            + MompRoyaltyPerMtAfn
+            + royaltyRate
             + freight;
 
         double discountPct = GetVolumeDiscountPct(quantityMt);
@@ -114,7 +116,7 @@ public static class PricingEngineService
             ExtractionCostAfn = profile.ExtractionAfnPerMt,
             ProcessingCostAfn = profile.ProcessingIodineAfnPerMt,
             PackagingCostAfn = profile.PackagingBagsAfnPerMt,
-            MompRoyaltyAfn = MompRoyaltyPerMtAfn,
+            MompRoyaltyAfn = royaltyRate,
             TransportCostAfn = freight,
             VolumeDiscountPct = discountPct,
             TargetMarginPct = targetMarginPct,

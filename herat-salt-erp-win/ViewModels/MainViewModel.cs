@@ -234,7 +234,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string KpiRevenueText => CanViewFinancials
         ? FormatMoney(WeighbridgeTickets.Where(t => t.Status == "ACTIVE").Sum(t => (t.NetWeightKg / 1000.0) * t.UnitPriceAfnPerMt))
         : "RBAC Restricted";
-    public string KpiRoyaltyText => $"MoMP Royalty: {FormatMoney(ExtractionLogs.Sum(x => x.RawTonnageMt) * 350.0)}";
+    public string KpiRoyaltyText => $"MoMP Royalty: {FormatMoney(ExtractionLogs.Sum(x => x.RawTonnageMt) * SettingsMompRoyaltyRate)}";
     public string KpiFuelText
     {
         get
@@ -372,7 +372,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         if (Contracts is null) return;
         CurrentSaleQuote = PricingEngineService.CalculateQuote(
-            SaleCustomer, SaleSaltGrade, SaleDestination, SaleQtyMt, SaleTargetMarginPct, UsdToAfn, Contracts);
+            SaleCustomer, SaleSaltGrade, SaleDestination, SaleQtyMt, SaleTargetMarginPct, UsdToAfn, Contracts, SettingsMompRoyaltyRate);
         SalePriceAfn = CurrentSaleQuote.FinalUnitPriceAfn;
     }
 
@@ -1106,6 +1106,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _snapshot.Settings.BaudRate = SettingsBaudRate;
         _snapshot.Settings.SyncApiBaseUrl = SettingsSyncUrl.Trim();
         SaleTargetMarginPct = _snapshot.Settings.DefaultMarginPct;
+        RecalculateSaleQuote();
         AddAudit("settings", "APP_CONFIG", "UPDATE", $"Updated mine profile, royalty ({_snapshot.Settings.MompRoyaltyRateAfnPerMt} AFN/MT) & {SettingsComPort}@{SettingsBaudRate}");
         PersistAndRefresh();
         ShowToast($"Saved all settings ({SettingsComPort} @ {SettingsBaudRate})");
@@ -1596,7 +1597,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (emp is null || !CanViewFinancials) { ShowToast("Owner/Finance role required for salary advances."); return; }
         const double advAfn = 2000;
         emp.AdvancesDeductionAfn += advAfn;
-        PostDoubleEntry("2200", "1000", advAfn, $"Salary advance (2,000 AFN) to {emp.FullName} ({emp.EmployeeCode})");
+        PostDoubleEntry("5000", "1000", advAfn, $"Labor salary advance (2,000 AFN) to {emp.FullName} ({emp.EmployeeCode})");
         AddAudit("payroll_advances", emp.EmployeeCode, "ADVANCE", $"Issued 2,000 AFN salary advance to {emp.FullName}");
         System.Windows.Data.CollectionViewSource.GetDefaultView(PayrollRecords)?.Refresh();
         PersistAndRefresh();

@@ -404,3 +404,70 @@ CREATE TABLE journal_lines (
 
 CREATE INDEX idx_journal_lines_account ON journal_lines(account_code);
 
+-- ----------------------------------------------------------------------------
+-- 10. EXPENSES, SUPPLIERS AP, QC LAB (CoA), EXPORT CUSTOMS & CONSUMABLES STORE
+-- ----------------------------------------------------------------------------
+CREATE TABLE mine_expenses (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  expense_code         VARCHAR(32) UNIQUE NOT NULL,
+  category             VARCHAR(40) NOT NULL,
+  description          TEXT NOT NULL,
+  payee                VARCHAR(140) NOT NULL,
+  amount_afn           NUMERIC(14, 2) NOT NULL CHECK (amount_afn > 0),
+  payment_account_code VARCHAR(12) NOT NULL REFERENCES chart_of_accounts(code),
+  receipt_ref          VARCHAR(64),
+  recorded_by          UUID REFERENCES users(id),
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE supplier_bills (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  bill_number     VARCHAR(32) UNIQUE NOT NULL,
+  supplier_name   VARCHAR(140) NOT NULL,
+  category        VARCHAR(40) NOT NULL,
+  amount_afn      NUMERIC(14, 2) NOT NULL CHECK (amount_afn > 0),
+  due_date        DATE NOT NULL,
+  status          VARCHAR(16) NOT NULL DEFAULT 'UNPAID' CHECK (status IN ('UNPAID','PAID')),
+  payment_ref     VARCHAR(64),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE qc_lab_tests (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  test_code       VARCHAR(32) UNIQUE NOT NULL,
+  batch_code      VARCHAR(40) NOT NULL,
+  salt_grade      VARCHAR(40) NOT NULL,
+  nacl_purity_pct NUMERIC(5, 2) NOT NULL,
+  moisture_pct    NUMERIC(5, 2) NOT NULL,
+  iodine_ppm      NUMERIC(6, 2) NOT NULL DEFAULT 0,
+  insoluble_pct   NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  status          VARCHAR(24) NOT NULL,
+  tested_by       VARCHAR(120) NOT NULL,
+  tested_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE export_shipments (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  shipment_code   VARCHAR(32) UNIQUE NOT NULL,
+  customs_decl_no VARCHAR(48) NOT NULL,
+  border_post     VARCHAR(32) NOT NULL,
+  buyer_name      VARCHAR(140) NOT NULL,
+  truck_plate     VARCHAR(32) NOT NULL,
+  tonnage_mt      NUMERIC(10, 2) NOT NULL CHECK (tonnage_mt > 0),
+  freight_afn     NUMERIC(14, 2) NOT NULL DEFAULT 0,
+  status          VARCHAR(24) NOT NULL DEFAULT 'AT_MINE' CHECK (status IN ('AT_MINE','IN_TRANSIT','BORDER_CLEARED','DELIVERED')),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE consumable_items (
+  sku_code        VARCHAR(32) PRIMARY KEY,
+  item_name       VARCHAR(140) NOT NULL,
+  category        VARCHAR(40) NOT NULL,
+  unit            VARCHAR(24) NOT NULL,
+  stock_qty       NUMERIC(12, 2) NOT NULL DEFAULT 0 CHECK (stock_qty >= 0),
+  reorder_level   NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  unit_cost_afn   NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
