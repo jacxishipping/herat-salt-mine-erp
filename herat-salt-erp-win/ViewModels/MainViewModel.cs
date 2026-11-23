@@ -589,6 +589,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand PrintBalanceSheetCommand { get; }
     public ICommand RecordMineExpenseCommand { get; }
     public ICommand AddGovObligationCommand { get; }
+    public ICommand AddEmptyGovObligationCommand { get; }
+    public ICommand RemoveGovObligationCommand { get; }
+    public ICommand SaveGovObligationsConfigCommand { get; }
     public ICommand PayGovObligationCommand { get; }
     public ICommand CompleteGovObligationCommand { get; }
     public ICommand PrintGovObligationsCommand { get; }
@@ -693,6 +696,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
         PrintBalanceSheetCommand = new RelayCommand(_ => PrintBalanceSheet());
         RecordMineExpenseCommand = new RelayCommand(_ => RecordMineExpense());
         AddGovObligationCommand = new RelayCommand(_ => AddGovObligation());
+        AddEmptyGovObligationCommand = new RelayCommand(_ => AddEmptyGovObligation());
+        RemoveGovObligationCommand = new RelayCommand(p => RemoveGovObligation(p as GovernmentObligation));
+        SaveGovObligationsConfigCommand = new RelayCommand(_ => SaveGovObligationsConfig());
         PayGovObligationCommand = new RelayCommand(p => PayGovObligation(p as GovernmentObligation));
         CompleteGovObligationCommand = new RelayCommand(p => CompleteGovObligation(p as GovernmentObligation));
         PrintGovObligationsCommand = new RelayCommand(_ => PrintGovObligations());
@@ -1723,6 +1729,48 @@ public sealed class MainViewModel : INotifyPropertyChanged
         AddAudit("government_obligations", gov.ObligationCode, "INSERT", $"Added {gov.ObligationType}: {gov.Title} ({gov.BudgetOrDueAfn:N0} AFN)");
         PersistAndRefresh();
         ShowToast($"Added government obligation {gov.ObligationCode}");
+    }
+
+    private void AddEmptyGovObligation()
+    {
+        if (!CanViewFinancials) { ShowToast("Owner or Finance Officer role required."); return; }
+        var gov = new GovernmentObligation
+        {
+            ObligationCode = $"GOV-{GovernmentObligations.Count + 1:D3}",
+            Title = "New Government Obligation / Build Project",
+            ObligationType = "CASH_PAYMENT",
+            Category = "OTHER_GOV",
+            MinistryOrAgency = "MoMP / Provincial Gov",
+            BudgetOrDueAfn = 250000,
+            PaidOrSpentAfn = 0,
+            DueDate = DateTime.Now.AddMonths(3).ToString("yyyy-MM-dd"),
+            Status = "PENDING",
+            ReferenceDoc = $"MOMP-CL-{DateTime.Now:yyyyMMdd}"
+        };
+        GovernmentObligations.Add(gov);
+        _snapshot.GovernmentObligations.Add(gov);
+        PersistAndRefresh();
+        ShowToast($"Added editable row {gov.ObligationCode} — edit inline & Save");
+    }
+
+    private void RemoveGovObligation(GovernmentObligation? gov)
+    {
+        if (gov is null || !CanViewFinancials) { ShowToast("Owner or Finance Officer role required."); return; }
+        GovernmentObligations.Remove(gov);
+        _snapshot.GovernmentObligations.Remove(gov);
+        AddAudit("government_obligations", gov.ObligationCode, "DELETE", $"Removed government obligation {gov.Title}");
+        PersistAndRefresh();
+        ShowToast($"Removed {gov.ObligationCode}");
+    }
+
+    private void SaveGovObligationsConfig()
+    {
+        if (!CanViewFinancials) { ShowToast("Owner or Finance Officer role required."); return; }
+        _snapshot.GovernmentObligations = GovernmentObligations.ToList();
+        System.Windows.Data.CollectionViewSource.GetDefaultView(GovernmentObligations)?.Refresh();
+        AddAudit("settings_gov_obligations", "CONTRACT_COMMITMENTS", "UPDATE", $"Saved {GovernmentObligations.Count} contract government obligations from Settings");
+        PersistAndRefresh();
+        ShowToast($"Saved {GovernmentObligations.Count} government obligations to SQLite");
     }
 
     private void PayGovObligation(GovernmentObligation? gov)

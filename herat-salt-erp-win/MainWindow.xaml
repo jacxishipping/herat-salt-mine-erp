@@ -1236,7 +1236,43 @@
                             </Grid>
                         </Border>
 
-                        <!-- 10E. MINE OPERATORS & RBAC ACCOUNTS -->
+                        <!-- 10E. CONTRACT GOVERNMENT OBLIGATIONS & BUILD COMMITMENTS (INLINE EDITABLE) -->
+                        <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="CONTRACT GOVERNMENT OBLIGATIONS &amp; PUBLIC BUILD COMMITMENTS" Style="{StaticResource SectionHeaderStyle}" />
+                                        <TextBlock Text="Double-click any cell to rename or customize your 7+ non-royalty government payments &amp; public build projects, then click Save."
+                                                   FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Button Content="+ Add Obligation" Command="{Binding AddEmptyGovObligationCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
+                                        <Button Content="Save Commitments" Command="{Binding SaveGovObligationsConfigCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                    </StackPanel>
+                                </Grid>
+                                <DataGrid ItemsSource="{Binding GovernmentObligations}" Style="{StaticResource SaaSDataGridStyle}"
+                                          IsReadOnly="False" CanUserAddRows="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Code" Binding="{Binding ObligationCode, UpdateSourceTrigger=PropertyChanged}" Width="75" />
+                                        <DataGridTextColumn Header="Obligation / Build Project Title" Binding="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                                        <DataGridTextColumn Header="Type (CASH_PAYMENT / BUILD_PROJECT)" Binding="{Binding ObligationType, UpdateSourceTrigger=PropertyChanged}" Width="145" />
+                                        <DataGridTextColumn Header="Ministry / Agency" Binding="{Binding MinistryOrAgency, UpdateSourceTrigger=PropertyChanged}" Width="155" />
+                                        <DataGridTextColumn Header="Budget / Due (AFN)" Binding="{Binding BudgetOrDueAfn, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" Width="115" />
+                                        <DataGridTextColumn Header="Due Date" Binding="{Binding DueDate, UpdateSourceTrigger=PropertyChanged}" Width="90" />
+                                        <DataGridTemplateColumn Header="Remove" Width="85">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="Delete" Style="{StaticResource SecondaryButtonStyle}" Padding="7,3"
+                                                            Command="{Binding DataContext.RemoveGovObligationCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 10F. MINE OPERATORS & RBAC ACCOUNTS -->
                         <Border Style="{StaticResource SurfaceCardStyle}">
                             <StackPanel>
                                 <TextBlock Text="MINE OPERATORS &amp; RBAC ACCOUNTS (OWNER ADMIN)" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
