@@ -38,7 +38,7 @@
                 <!-- DPAPI Operator Login + Site Sync Link -->
                 <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
                     <Button Content="{Binding OperatorBadge}" Command="{Binding OpenLoginCommand}"
-                            Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,0,8" />
+                            Tag="&#xE72E;" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,0,8" />
 
                     <Border Style="{StaticResource SurfaceCardStyle}" Padding="12">
                         <StackPanel>
@@ -60,54 +60,54 @@
                     </Border>
                 </StackPanel>
 
-                <!-- SCROLLABLE NAVIGATION -->
+                <!-- SCROLLABLE NAVIGATION WITH SEGOE MDL2 VECTOR ICONS -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
                         <TextBlock Text="OPERATIONS" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
                         <StackPanel Margin="0,0,0,12">
-                            <RadioButton GroupName="Nav" IsChecked="True" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" IsChecked="True" Style="{StaticResource NavRadioStyle}" Tag="&#xE80F;"
                                          Content="{Binding Strings[NavDashboard]}" Command="{Binding SelectTabCommand}" CommandParameter="Dashboard" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE9D9;"
                                          Content="{Binding Strings[NavWeighbridge]}" Command="{Binding SelectTabCommand}" CommandParameter="Weighbridge" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE7F4;"
                                          Content="{Binding Strings[NavExtraction]}" Command="{Binding SelectTabCommand}" CommandParameter="Extraction" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE7B8;"
                                          Content="{Binding Strings[NavProcessing]}" Command="{Binding SelectTabCommand}" CommandParameter="Processing" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE9D5;"
                                          Content="{Binding Strings[NavQcLab]}" Command="{Binding SelectTabCommand}" CommandParameter="QcLab" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE7BF;"
                                          Content="{Binding Strings[NavStores]}" Command="{Binding SelectTabCommand}" CommandParameter="Stores" />
                         </StackPanel>
 
                         <TextBlock Text="COMMERCIAL &amp; EXPORTS" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
                         <StackPanel Margin="0,0,0,12">
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE8C7;"
                                          Content="{Binding Strings[NavSales]}" Command="{Binding SelectTabCommand}" CommandParameter="Sales" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE716;"
                                          Content="{Binding Strings[NavCustomers]}" Command="{Binding SelectTabCommand}" CommandParameter="Customers" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE804;"
                                          Content="{Binding Strings[NavExports]}" Command="{Binding SelectTabCommand}" CommandParameter="Exports" />
                         </StackPanel>
 
                         <TextBlock Text="FINANCE &amp; GOVERNANCE" Style="{StaticResource SectionHeaderStyle}" Margin="10,0,0,6" />
                         <StackPanel Margin="0,0,0,10">
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE825;"
                                          Content="{Binding Strings[NavFinance]}" Command="{Binding SelectTabCommand}" CommandParameter="Finance" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE82D;"
                                          Content="{Binding Strings[NavGovObligations]}" Command="{Binding SelectTabCommand}" CommandParameter="GovObligations" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE9F9;"
                                          Content="{Binding Strings[NavAccounting]}" Command="{Binding SelectTabCommand}" CommandParameter="Accounting" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE8C8;"
                                          Content="{Binding Strings[NavExpenses]}" Command="{Binding SelectTabCommand}" CommandParameter="Expenses" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE719;"
                                          Content="{Binding Strings[NavSuppliers]}" Command="{Binding SelectTabCommand}" CommandParameter="Suppliers" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE9D2;"
                                          Content="{Binding Strings[NavReports]}" Command="{Binding SelectTabCommand}" CommandParameter="Reports" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE77B;"
                                          Content="{Binding Strings[NavHrHse]}" Command="{Binding SelectTabCommand}" CommandParameter="HrHse" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE72E;"
                                          Content="{Binding Strings[NavAudit]}" Command="{Binding SelectTabCommand}" CommandParameter="Audit" />
-                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}"
+                            <RadioButton GroupName="Nav" Style="{StaticResource NavRadioStyle}" Tag="&#xE713;"
                                          Content="{Binding Strings[NavSettings]}" Command="{Binding SelectTabCommand}" CommandParameter="Settings" />
                         </StackPanel>
                     </StackPanel>
@@ -118,31 +118,49 @@
         <!-- MAIN WORKSPACE -->
         <DockPanel Grid.Column="1">
             <!-- Top Header -->
-            <Border DockPanel.Dock="Top" Height="50" Padding="20,0"
-                    Background="{DynamicResource BgMainBrush}"
+            <Border DockPanel.Dock="Top" Height="54" Padding="20,0"
+                    Background="{DynamicResource BgSidebarBrush}"
                     BorderBrush="{DynamicResource BorderHairBrush}" BorderThickness="0,0,0,1">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Strings[BrandTitle]}" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" />
                         <TextBlock Text=" / " FontSize="12" Foreground="{DynamicResource TextMutedBrush}" />
-                        <TextBlock Text="{Binding ActiveBreadcrumb}" FontSize="12" FontWeight="SemiBold" />
-                        <Button Content="{Binding PendingSyncLabel}"
+                        <TextBlock Text="{Binding ActiveBreadcrumb}" FontSize="12.5" FontWeight="SemiBold" />
+                        <Button Content="{Binding PendingSyncLabel}" Tag="&#xE895;"
                                 Visibility="{Binding HasPendingSync, Converter={StaticResource BoolToVis}}"
                                 Command="{Binding SyncQueueCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}" Margin="14,0,0,0" Padding="10,4" FontSize="11" />
+                                Style="{StaticResource PrimaryButtonStyle}" Margin="14,0,0,0" Padding="10,4" MinHeight="28" FontSize="11" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <TextBlock Text="FX:" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
-                        <TextBox Text="{Binding UsdToAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Width="56" Margin="0,0,8,0" />
+                        <TextBlock Text="FX" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBox Text="{Binding UsdToAfn, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Width="58" Margin="0,0,8,0" ToolTip="USD to AFN Exchange Rate" />
+
                         <ComboBox ItemsSource="{Binding AllRoles}" SelectedItem="{Binding ActiveRole}"
-                                  Style="{StaticResource SaaSComboBoxStyle}" Width="168" Margin="0,0,8,0" />
-                        <Button Content="AFN ؋" Command="{Binding SetCurrencyCommand}" CommandParameter="AFN" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,3,0" />
-                        <Button Content="USD $" Command="{Binding SetCurrencyCommand}" CommandParameter="USD" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
-                        <Button Content="EN" Command="{Binding SetLangCommand}" CommandParameter="EN" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,3,0" />
-                        <Button Content="دری" Command="{Binding SetLangCommand}" CommandParameter="FA" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,3,0" />
-                        <Button Content="پښتو" Command="{Binding SetLangCommand}" CommandParameter="PS" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
-                        <Button Content="Theme" Command="{Binding ToggleThemeCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                  Style="{StaticResource SaaSComboBoxStyle}" Width="165" Margin="0,0,8,0" ToolTip="Active RBAC Role" />
+
+                        <!-- Segmented Currency Pill -->
+                        <Border Background="{DynamicResource BgElevatedBrush}" CornerRadius="8" Padding="2" Margin="0,0,8,0"
+                                BorderBrush="{DynamicResource BorderHairBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="AFN ؋" Command="{Binding SetCurrencyCommand}" CommandParameter="AFN" Style="{StaticResource SegmentButtonStyle}" />
+                                <Button Content="USD $" Command="{Binding SetCurrencyCommand}" CommandParameter="USD" Style="{StaticResource SegmentButtonStyle}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Segmented Language Pill -->
+                        <Border Background="{DynamicResource BgElevatedBrush}" CornerRadius="8" Padding="2" Margin="0,0,8,0"
+                                BorderBrush="{DynamicResource BorderHairBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="EN" Command="{Binding SetLangCommand}" CommandParameter="EN" Style="{StaticResource SegmentButtonStyle}" />
+                                <Button Content="دری" Command="{Binding SetLangCommand}" CommandParameter="FA" Style="{StaticResource SegmentButtonStyle}" />
+                                <Button Content="پښتو" Command="{Binding SetLangCommand}" CommandParameter="PS" Style="{StaticResource SegmentButtonStyle}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Icon-Only Theme Switch Button -->
+                        <Button Content="&#xE793;" Command="{Binding ToggleThemeCommand}" Style="{StaticResource IconButtonStyle}"
+                                ToolTip="Toggle Dark / Light Theme" />
                     </StackPanel>
                 </Grid>
             </Border>
@@ -289,7 +307,7 @@
                                 </UniformGrid>
 
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <Button Content="{Binding Strings[CaptureScale]}" Command="{Binding CaptureScaleCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
+                                    <Button Tag="&#xE9D9;" Content="{Binding Strings[CaptureScale]}" Command="{Binding CaptureScaleCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
                                     <Button Content="{Binding Strings[IssueTicket]}" Command="{Binding IssueTicketCommand}" Style="{StaticResource PrimaryButtonStyle}" />
                                 </StackPanel>
                             </StackPanel>
@@ -605,7 +623,7 @@
                                     <TextBlock Text="Hawala settlements, customer credit, long-term tonnage contracts, invoices &amp; MoMP royalties."
                                                Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
                                 </StackPanel>
-                                <Button Content="{Binding Strings[ExportCsv]}" Command="{Binding ExportCsvCommand}"
+                                <Button Tag="&#xEDE1;" Content="{Binding Strings[ExportCsv]}" Command="{Binding ExportCsvCommand}"
                                         Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
 
@@ -745,7 +763,7 @@
                                             <TextBlock Text="Live double-entry snapshot: Assets = Liabilities + Owner's Equity + Current Period Net Profit"
                                                        FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
                                         </StackPanel>
-                                        <Button Content="Print Balance Sheet" Command="{Binding PrintBalanceSheetCommand}"
+                                        <Button Tag="&#xE749;" Content="Print Balance Sheet" Command="{Binding PrintBalanceSheetCommand}"
                                                 Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                                     </Grid>
 
@@ -932,7 +950,7 @@
                                            Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <Button Content="Pay All Unpaid Salaries" Command="{Binding PayAllSalariesCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                                <Button Tag="&#xE8C7;" Content="Pay All Unpaid Salaries" Command="{Binding PayAllSalariesCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
                                 <Button Content="+ Biometric Check-In" Command="{Binding LogAttendanceCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
                                 <Button Content="+ Issue PPE Kit" Command="{Binding IssuePpeKitCommand}" Style="{StaticResource SecondaryButtonStyle}" />
                             </StackPanel>
@@ -1024,7 +1042,7 @@
                                                             Command="{Binding DataContext.GiveLaborAdvanceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
                                                     <Button Content="Pay Salary" Style="{StaticResource PrimaryButtonStyle}" Padding="6,3" Margin="0,0,4,0"
                                                             Command="{Binding DataContext.PayWorkerSalaryCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                                                    <Button Content="Payslip" Style="{StaticResource SecondaryButtonStyle}" Padding="6,3"
+                                                    <Button Tag="&#xE749;" Content="Payslip" Style="{StaticResource SecondaryButtonStyle}" Padding="6,3"
                                                             Command="{Binding DataContext.PrintPayslipCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
                                                 </StackPanel>
                                             </DataTemplate>
@@ -1147,7 +1165,7 @@
                                 <TextBlock Text="Company &amp; MoMP license profile, royalty/margin defaults, RS-232 Kanta scale diagnostics, SQLite backups &amp; RBAC operators."
                                            Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
                             </StackPanel>
-                            <Button Content="Save All Settings" Command="{Binding SaveSettingsCommand}"
+                            <Button Tag="&#xE74E;" Content="Save All Settings" Command="{Binding SaveSettingsCommand}"
                                     Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
 
@@ -1214,7 +1232,7 @@
                                         <TextBlock Text="Central ERP Sync URL" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
                                         <TextBox Text="{Binding SettingsSyncUrl, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" />
                                     </StackPanel>
-                                    <Button Content="Test RS-232 Scale" Command="{Binding TestKantaPortCommand}" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" />
+                                    <Button Tag="&#xE9D9;" Content="Test RS-232 Scale" Command="{Binding TestKantaPortCommand}" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" />
                                 </UniformGrid>
                                 <Border Style="{StaticResource TerminalBoxStyle}" Padding="10,8">
                                     <TextBlock Text="{Binding KantaDiagnosticStatus}" Style="{StaticResource MonoTextStyle}" FontSize="11.5" Foreground="#10B981" />
@@ -1230,8 +1248,8 @@
                                     <TextBlock Text="{Binding DatabasePathText}" Style="{StaticResource MonoTextStyle}" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                    <Button Content="Backup SQLite to Desktop" Command="{Binding BackupDatabaseCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
-                                    <Button Content="Export Audit CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Tag="&#xE74E;" Content="Backup SQLite" Command="{Binding BackupDatabaseCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                                    <Button Tag="&#xEDE1;" Content="Export CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource SecondaryButtonStyle}" />
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -1247,7 +1265,7 @@
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <Button Content="+ Add Obligation" Command="{Binding AddEmptyGovObligationCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
-                                        <Button Content="Save Commitments" Command="{Binding SaveGovObligationsConfigCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                        <Button Tag="&#xE74E;" Content="Save Commitments" Command="{Binding SaveGovObligationsConfigCommand}" Style="{StaticResource PrimaryButtonStyle}" />
                                     </StackPanel>
                                 </Grid>
                                 <DataGrid ItemsSource="{Binding GovernmentObligations}" Style="{StaticResource SaaSDataGridStyle}"
@@ -1262,7 +1280,8 @@
                                         <DataGridTemplateColumn Header="Remove" Width="85">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Button Content="Delete" Style="{StaticResource SecondaryButtonStyle}" Padding="7,3"
+                                                    <Button Content="&#xE74D;" ToolTip="Delete Obligation" Style="{StaticResource IconButtonStyle}"
+                                                            Background="{DynamicResource DangerBgBrush}" Foreground="{DynamicResource DangerBrush}" BorderBrush="#55EF4444"
                                                             Command="{Binding DataContext.RemoveGovObligationCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
@@ -1363,7 +1382,7 @@
                                     <DataGridTemplateColumn Header="Certificate" Width="115">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Button Content="Print CoA" Style="{StaticResource SecondaryButtonStyle}" Padding="7,3"
+                                                <Button Tag="&#xE749;" Content="CoA" ToolTip="Print Certificate of Analysis" Style="{StaticResource SecondaryButtonStyle}" Padding="7,3"
                                                         Command="{Binding DataContext.PrintCoaCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
@@ -1530,8 +1549,8 @@
                                                Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                    <Button Content="Print Executive Report" Command="{Binding PrintExecutiveReportCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
-                                    <Button Content="Export Audit CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Tag="&#xE749;" Content="Print Executive Report" Command="{Binding PrintExecutiveReportCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                                    <Button Tag="&#xEDE1;" Content="Export CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource SecondaryButtonStyle}" />
                                 </StackPanel>
                             </Grid>
 
@@ -1711,7 +1730,7 @@
                                     <TextBlock Text="Track all non-royalty government payments (Surface Rent, BRT Tax, NEPA Bond, Security) &amp; public CSR build commitments (Schools, Roads, Clinics, Water Wells)."
                                                Style="{StaticResource SubtitleStyle}" Margin="0,4,0,0" />
                                 </StackPanel>
-                                <Button Content="Print Compliance Statement" Command="{Binding PrintGovObligationsCommand}"
+                                <Button Tag="&#xE749;" Content="Print Compliance Statement" Command="{Binding PrintGovObligationsCommand}"
                                         Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
 
@@ -1814,11 +1833,11 @@
                 <StackPanel>
                     <Grid Margin="0,0,0,12">
                         <TextBlock Text="Windows DPAPI Operator Sign-In" FontSize="14" FontWeight="SemiBold" />
-                        <Button Content="✕" Command="{Binding CloseLoginCommand}" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Right" Padding="8,3" />
+                        <Button Content="&#xE711;" Command="{Binding CloseLoginCommand}" Style="{StaticResource IconButtonStyle}" HorizontalAlignment="Right" ToolTip="Close" />
                     </Grid>
                     <TextBlock Text="Operator Email (owner / ops / kanta / warehouse / finance / hse @heratsalt.af)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6" TextWrapping="Wrap" />
                     <TextBox Text="{Binding LoginEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SaaSTextBoxStyle}" Margin="0,0,0,14" />
-                    <Button Content="Sign In &amp; Seal DPAPI Token" Command="{Binding SignInOperatorCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                    <Button Tag="&#xE72E;" Content="Sign In &amp; Seal DPAPI Token" Command="{Binding SignInOperatorCommand}" Style="{StaticResource PrimaryButtonStyle}" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -1833,11 +1852,11 @@
                             <TextBlock Text="Official QR Waybill / Bilty" FontSize="15" FontWeight="SemiBold" />
                             <TextBlock Text="{Binding SelectedWaybill.TicketNumber}" Style="{StaticResource MonoTextStyle}" FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}" />
                         </StackPanel>
-                        <Button Content="✕" Command="{Binding CloseWaybillCommand}" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Right" Padding="8,4" />
+                        <Button Content="&#xE711;" Command="{Binding CloseWaybillCommand}" Style="{StaticResource IconButtonStyle}" HorizontalAlignment="Right" ToolTip="Close" />
                     </Grid>
 
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
-                        <Button Content="{Binding Strings[PrintWaybill]}" Command="{Binding PrintWaybillCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                        <Button Tag="&#xE749;" Content="{Binding Strings[PrintWaybill]}" Command="{Binding PrintWaybillCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
                         <Button Content="Close" Command="{Binding CloseWaybillCommand}" Style="{StaticResource SecondaryButtonStyle}" />
                     </StackPanel>
 
